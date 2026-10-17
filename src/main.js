@@ -9,7 +9,6 @@ export default class MainScene extends Phaser.Scene{
             this.buildings = [{id: 1, name: "farm", cost: 15, production: 0.2, owned: 0}]
     }
 
-
     preload(){
         this.load.image('click-image', 'assets/clic-button.png')
     }
@@ -28,22 +27,15 @@ export default class MainScene extends Phaser.Scene{
         this.updateBuildingText();
     }
 
+    makeClickButton(width, height){
+        this.clickButton = this.add.image(width * 0.15, height * 0.50, 'click-image').setScale(0.3).setAlpha(0.8).setOrigin(0.5).setInteractive().on('pointerdown', () => {
+            this.addScore(1);
+        })
+    }
+
     addScore(amount){
         this.score += amount
         this.updateScoreText();
-    }
-
-    updateScoreText(){
-        this.scoreText.setText(`Score:  ${Math.floor(this.score)}`)
-    }
-
-    refreshUi(){
-        this.updateBuildingText()
-        this.updateScoreText()
-    }
-
-    updateBuildingText(){
-        this.farm.setText(`Farm(${this.buildings[0].owned}), cost: ${this.getCost(this.buildings[0])} points`)
     }
 
     getCost(building){
@@ -59,6 +51,19 @@ export default class MainScene extends Phaser.Scene{
         }
     }
 
+    updateScoreText(){
+        this.scoreText.setText(`Score:  ${Math.floor(this.score)}`)
+    }
+    
+    updateBuildingText(){
+        this.farm.setText(`Farm(${this.buildings[0].owned}), cost: ${this.getCost(this.buildings[0])} points`)
+    }
+
+    refreshUi(){
+        this.updateBuildingText()
+        this.updateScoreText()
+    }
+
     update(time, delta){
         let totalProduction = 0;
 
@@ -72,21 +77,6 @@ export default class MainScene extends Phaser.Scene{
         this.refreshUi();
 
     }
-
-    makeButton(x, y, width, height, color, onClick) {
-        const button = this.add.rectangle(x, y, width, height, color).setInteractive();
-        button.on('pointerdown', onClick);
-        return button;
-    }
-
-    makeClickButton(width, height){
-        this.clickButton = this.add.image(width * 0.15, height * 0.50, 'click-image').setScale(0.3).setAlpha(0.8).setOrigin(0.5).setInteractive().on('pointerdown', () => {
-            this.addScore(1);
-        })
-    }
-
-
-
 }
 
 const config = {
