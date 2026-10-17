@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 import './style.css'
 
+const SAVE_KEY = 'little-hollow-save'
+
+
 
 export default class MainScene extends Phaser.Scene{
     constructor(){
             super('GameScene');
-            this.score = 0;
-            this.buildings = [{id: 1, name: "farm", cost: 15, production: 0.2, owned: 0}]
+
     }
 
     preload(){
@@ -14,32 +16,41 @@ export default class MainScene extends Phaser.Scene{
     }
 
     create(){
+
+        this.score = 0;
+        this.buildings = [{id: 1, name: "farm", cost: 15, production: 0.2, count: 0}]
+        this.clickPower = 1;
+
+        this.loadGame();
+
         const {width, height} = this.scale;
         this.scoreText = this.add.text(width * 0.15, height * 0.15, 'Score: 0', {fontSize: '48px', color: '#ffffff'}).setOrigin(0.5);
         this.makeClickButton(width, height);
-        this.updateScoreText()
-
 
         this.farm = this.add.text(width * 0.70, height * 0.20, null,  {fontSize: '30px'} ).setInteractive({useHandCursor: true}).on('pointerdown', () =>{
             this.buyBuilding(this.buildings[0])
-            this.updateBuildingText();
+
         })
-        this.updateBuildingText();
+
+        this.time.addEvent({
+            delay: 5000,
+            loop: true,
+            callback: () => this.saveGame()
+        });
     }
 
     makeClickButton(width, height){
         this.clickButton = this.add.image(width * 0.15, height * 0.50, 'click-image').setScale(0.3).setAlpha(0.8).setOrigin(0.5).setInteractive().on('pointerdown', () => {
-            this.addScore(1);
+            this.addScore(this.clickPower);
         })
     }
 
     addScore(amount){
         this.score += amount
-        this.updateScoreText();
     }
 
     getCost(building){
-        return Math.floor(building.cost * 1.15**building.owned) 
+        return Math.floor(building.cost * 1.15**building.count) 
     }
 
     buyBuilding(building){
@@ -47,16 +58,21 @@ export default class MainScene extends Phaser.Scene{
 
         if (this.score >= cost) {
             this.addScore(-cost);
-            building.owned++;
+            building.count++;
         }
+
     }
 
     updateScoreText(){
-        this.scoreText.setText(`Score:  ${Math.floor(this.score)}`)
+        this.scoreText.setText(`Score: ${Math.floor(this.score)}`)
     }
     
     updateBuildingText(){
-        this.farm.setText(`Farm(${this.buildings[0].owned}), cost: ${this.getCost(this.buildings[0])} points`)
+        this.farm.setText(`Farm(${this.buildings[0].count}), cost: ${this.getCost(this.buildings[0])} points`)
+    }
+
+    findBuildingById(buildingId) {
+        return this.buildings.find(b => b.id === buildingId);
     }
 
     refreshUi(){
@@ -70,12 +86,53 @@ export default class MainScene extends Phaser.Scene{
         const elapsedTime = delta / 1000
 
         for (const building of this.buildings) {
-            totalProduction += building.owned * building.production
+            totalProduction += building.count * building.production
         }
 
         this.addScore(totalProduction * elapsedTime)
         this.refreshUi();
+  
+    }
 
+    saveGame(){
+        const save = {
+            version: 1,
+            score: this.score,
+            clickPower: this.clickPower,
+            buildings: this.buildings.map(building => ({id: building.id, count: building.count}))
+        }
+
+        localStorage.setItem(SAVE_KEY, JSON.stringify(save))
+    }
+
+    loadGame(){
+
+        let save;
+
+        try{
+            save =  JSON.parse(localStorage.getItem(SAVE_KEY))
+            if(save == null){
+                return
+            }
+        }catch(err){
+            console.warn(`Faulty save (${err})`)
+            return
+        }
+
+        this.score = save.score ?? this.score
+        this.clickPower = save.clickPower ?? 1
+
+        for (const savedBuilding of save.buildings) {
+
+            const buildingToRestore = this.findBuildingById(savedBuilding.id)
+
+            if(buildingToRestore == null){
+                continue
+            }
+            buildingToRestore.count = savedBuilding.count
+         
+
+        }
     }
 }
 
