@@ -6,6 +6,7 @@ export default class MainScene extends Phaser.Scene{
     constructor(){
             super('GameScene');
             this.score = 0;
+            this.buildings = [{id: 1, name: "farm", cost: 15, production: 0.2, owned: 0}]
     }
 
 
@@ -18,6 +19,13 @@ export default class MainScene extends Phaser.Scene{
         this.scoreText = this.add.text(width * 0.15, height * 0.15, 'Score: 0', {fontSize: '48px', color: '#ffffff'}).setOrigin(0.5);
         this.makeClickButton(width, height);
         this.updateScoreText()
+
+
+        this.farm = this.add.text(width * 0.70, height * 0.20, null,  {fontSize: '30px'} ).setInteractive({useHandCursor: true}).on('pointerdown', () =>{
+            this.buyBuilding(this.buildings[0])
+            this.updateBuildingText();
+        })
+        this.updateBuildingText();
     }
 
     addScore(amount){
@@ -26,13 +34,54 @@ export default class MainScene extends Phaser.Scene{
     }
 
     updateScoreText(){
-        this.scoreText.setText(`Score: ${this.score}`)
+        this.scoreText.setText(`Score:  ${Math.floor(this.score)}`)
+    }
+
+    refreshUi(){
+        this.updateBuildingText()
+        this.updateScoreText()
+    }
+
+    updateBuildingText(){
+        this.farm.setText(`Farm(${this.buildings[0].owned}), cost: ${this.getCost(this.buildings[0])} points`)
+    }
+
+    getCost(building){
+        return Math.floor(building.cost * 1.15**building.owned) 
+    }
+
+    buyBuilding(building){
+        const cost = this.getCost(building)
+
+        if (this.score >= cost) {
+            this.addScore(-cost);
+            building.owned++;
+        }
+    }
+
+    update(time, delta){
+        let totalProduction = 0;
+
+        const elapsedTime = delta / 1000
+
+        for (const building of this.buildings) {
+            totalProduction += building.owned * building.production
+        }
+
+        this.addScore(totalProduction * elapsedTime)
+        this.refreshUi();
+
+    }
+
+    makeButton(x, y, width, height, color, onClick) {
+        const button = this.add.rectangle(x, y, width, height, color).setInteractive();
+        button.on('pointerdown', onClick);
+        return button;
     }
 
     makeClickButton(width, height){
         this.clickButton = this.add.image(width * 0.15, height * 0.50, 'click-image').setScale(0.3).setAlpha(0.8).setOrigin(0.5).setInteractive().on('pointerdown', () => {
             this.addScore(1);
-
         })
     }
 
