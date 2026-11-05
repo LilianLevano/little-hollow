@@ -51,7 +51,7 @@ export default class MainScene extends Phaser.Scene{
         })
 
         this.upgrades.forEach((upgrade, index) => {
-            upgrade.label = this.add.text(width * 0.65, height * 0.55 + index * 50, `${upgrade.name}, cost: ${upgrade.cost} points`, {fontSize: '32px', color: '#ffffff'}).setOrigin(0, 0.5).setInteractive().on('pointerdown', () => {
+            upgrade.label = this.add.text(width * 0.65, height * 0.55 + index * 50, `${upgrade.name}, cost: ${upgrade.cost} points`, {fontSize: '32px', color: '#ffffff', wordWrap: {width: 600}}).setOrigin(0, 0).setInteractive().on('pointerdown', () => {
                 this.buyUpgrade(upgrade)
             })
         })
@@ -130,14 +130,14 @@ export default class MainScene extends Phaser.Scene{
 
     layoutUpgrades(){
         const {height} = this.scale;
-        let row = 0;
+        let y = height * 0.55;
         for (const upgrade of this.upgrades){
             if (upgrade.bought){
                 upgrade.label.setVisible(false);
             } else {
                 upgrade.label.setVisible(true);
-                this.tweens.add({targets: upgrade.label, y: height * 0.55 + row * 50, duration: 200});
-                row++;
+                this.tweens.add({targets: upgrade.label, y: y, duration: 200});
+                y += upgrade.label.height + 15;
             }
         }
     }
