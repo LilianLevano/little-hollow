@@ -6,17 +6,61 @@ const SAVE_KEY = 'little-hollow-save'
 const BUILDINGS = [
     {id: 1, name: "farm", cost: 15, production: 0.2},
     {id: 2, name: "mine", cost: 50, production: 1.0},
-    {id: 3, name: "factory", cost: 200, production: 5.0}
+    {id: 3, name: "factory", cost: 200, production: 5.0},
+    {id: 4, name: "railway", cost: 1500, production: 25},
+    {id: 5, name: "harbor", cost: 12000, production: 130},
+    {id: 6, name: "bank", cost: 100000, production: 750},
+    {id: 7, name: "laboratory", cost: 900000, production: 4500},
+    {id: 8, name: "observatory", cost: 8500000, production: 28000},
+    {id: 9, name: "spaceport", cost: 85000000, production: 190000},
+    {id: 10, name: "hollow rift", cost: 900000000, production: 1300000}
 ]
 
 const UPGRADES = [
     {id: 1, type: "click", target: "clickPower", name: "Gloves", cost: 100, multiplier: 2.0, description: "Doubles the amount of points per click."},
     {id: 2, type: "building", target: 1, name: "Better seeds", cost: 200, multiplier: 2.0, description: "Doubles the amount of points per farm."},
     {id: 3, type: "building", target: 2, name: "Getting an Upgrade!", cost: 500, multiplier: 2.0, description: "Doubles the amount of points per mine."},
-    {id: 4, type: "building", target: 3, name: "Industrialization", cost: 1000, multiplier: 2.0, description: "Doubles the amount of points per factory."}
+    {id: 4, type: "building", target: 3, name: "Industrialization", cost: 1000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
+    {id: 5, type: "click", target: "clickPower", name: "Iron Knuckles", cost: 1500, multiplier: 2.0, description: "Doubles the amount of points per click."},
+    {id: 6, type: "building", target: 1, unlockAt: 10, name: "Irrigation", cost: 2500, multiplier: 2.0, description: "Doubles the amount of points per farm."},
+    {id: 7, type: "building", target: 2, unlockAt: 10, name: "Steel Pickaxes", cost: 6000, multiplier: 2.0, description: "Doubles the amount of points per mine."},
+    {id: 8, type: "building", target: 4, name: "Steam Engines", cost: 22000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
+    {id: 9, type: "building", target: 3, unlockAt: 10, name: "Assembly Lines", cost: 25000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
+    {id: 10, type: "global", target: "production", name: "Trade Routes", cost: 60000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
+    {id: 11, type: "building", target: 4, unlockAt: 10, name: "Express Lines", cost: 150000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
+    {id: 12, type: "building", target: 5, name: "Cargo Cranes", cost: 180000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
+    {id: 13, type: "click", target: "clickPower", name: "Golden Touch", cost: 200000, multiplier: 3.0, description: "Triples the amount of points per click."},
+    {id: 14, type: "building", target: 5, unlockAt: 10, name: "Deep Water Docks", cost: 1200000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
+    {id: 15, type: "building", target: 6, name: "Compound Interest", cost: 1500000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
+    {id: 16, type: "global", target: "production", name: "Guild Charter", cost: 5000000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
+    {id: 17, type: "building", target: 6, unlockAt: 10, name: "Offshore Accounts", cost: 10000000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
+    {id: 18, type: "building", target: 7, name: "Peer Review", cost: 13000000, multiplier: 2.0, description: "Doubles the amount of points per laboratory."},
+    {id: 19, type: "click", target: "clickPower", name: "Hollow Grip", cost: 50000000, multiplier: 5.0, description: "Multiplies the amount of points per click by 5."},
+    {id: 20, type: "building", target: 8, name: "Bigger Lenses", cost: 130000000, multiplier: 2.0, description: "Doubles the amount of points per observatory."},
+    {id: 21, type: "global", target: "production", name: "Golden Age", cost: 300000000, multiplier: 2.0, description: "Doubles the production of all buildings."},
+    {id: 22, type: "building", target: 9, name: "Reusable Rockets", cost: 1300000000, multiplier: 2.0, description: "Doubles the amount of points per spaceport."},
+    {id: 23, type: "building", target: 10, name: "Stable Anchors", cost: 13000000000, multiplier: 2.0, description: "Doubles the amount of points per hollow rift."},
+    {id: 24, type: "global", target: "production", name: "Hollow Awakening", cost: 40000000000, multiplier: 3.0, description: "Triples the production of all buildings."}
 ]
 
+const MAX_VISIBLE_UPGRADES = 8
 
+const SHOP_WIDTH = 720
+const TILE_SIZE = 72
+const TILE_GAP = 12
+const UPGRADES_Y = 60
+const BUILDINGS_Y = 170
+const BUILDING_ROW_HEIGHT = 84
+
+const compactNumber = new Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 2})
+
+function formatNumber(value){
+    return value < 1000000 ? `${Math.floor(value)}` : compactNumber.format(value)
+}
+
+function getInitials(name){
+    return name.split(' ').slice(0, 2).map(word => word[0].toUpperCase()).join('')
+}
 
 export default class MainScene extends Phaser.Scene{
     constructor(){
@@ -31,7 +75,7 @@ export default class MainScene extends Phaser.Scene{
 
         this.score = 0;
         this.buildings = BUILDINGS.map(b => ({...b, count: 0}));
-        this.upgrades = UPGRADES.map(u => ({...u, bought: false}));
+        this.upgrades = UPGRADES.map(u => ({...u, bought: false})).sort((a, b) => a.cost - b.cost);
 
         this.loadGame();
 
@@ -44,17 +88,17 @@ export default class MainScene extends Phaser.Scene{
             this.scene.restart()
         })
 
+        this.shopX = width * 0.60;
+
         this.buildings.forEach((building, index) => {
-            building.label = this.add.text(width * 0.65, height * 0.25 + index * 50, `${building.name}(${building.count}), cost: ${this.getCost(building)} points`, {fontSize: '32px', color: '#ffffff'}).setOrigin(0, 0.5).setInteractive().on('pointerdown', () => {
-                this.buyBuilding(building)
-            })
+            this.makeBuildingRow(building, index)
         })
 
-        this.upgrades.forEach((upgrade, index) => {
-            upgrade.label = this.add.text(width * 0.65, height * 0.55 + index * 50, `${upgrade.name}, cost: ${upgrade.cost} points`, {fontSize: '32px', color: '#ffffff', wordWrap: {width: 600}}).setOrigin(0, 0).setInteractive().on('pointerdown', () => {
-                this.buyUpgrade(upgrade)
-            })
+        this.upgrades.forEach((upgrade) => {
+            this.makeUpgradeTile(upgrade)
         })
+
+        this.tooltip = this.add.text(this.shopX - 20, 0, '', {fontSize: '28px', color: '#ffffff', backgroundColor: '#11111b', padding: {x: 16, y: 12}, wordWrap: {width: 480}}).setOrigin(1, 0).setDepth(10).setVisible(false);
 
         this.layoutUpgrades()
 
@@ -71,6 +115,77 @@ export default class MainScene extends Phaser.Scene{
         })
     }
 
+    makeTile(x, y, text){
+        const background = this.add.rectangle(0, 0, TILE_SIZE, TILE_SIZE, 0x45475a).setOrigin(0);
+        const initials = this.add.text(TILE_SIZE / 2, TILE_SIZE / 2, text, {fontSize: '32px', color: '#ffffff'}).setOrigin(0.5);
+        return {background, tile: this.add.container(x, y, [background, initials])};
+    }
+
+    makeBuildingRow(building, index){
+        const y = BUILDINGS_Y + index * BUILDING_ROW_HEIGHT;
+        const rowBackground = this.add.rectangle(0, 0, SHOP_WIDTH, TILE_SIZE, 0x313244).setOrigin(0);
+        const {tile} = this.makeTile(0, 0, getInitials(building.name));
+        const name = this.add.text(TILE_SIZE + TILE_GAP, TILE_SIZE / 2, building.name, {fontSize: '32px', color: '#ffffff'}).setOrigin(0, 0.5);
+        building.countText = this.add.text(SHOP_WIDTH - TILE_GAP, TILE_SIZE / 2, `${building.count}`, {fontSize: '40px', color: '#ffffff'}).setOrigin(1, 0.5);
+        building.row = this.add.container(this.shopX, y, [rowBackground, tile, name, building.countText]);
+
+        this.addHover(rowBackground, y, () => this.getBuildingInfo(building)).on('pointerdown', () => {
+            this.buyBuilding(building)
+        })
+    }
+
+    makeUpgradeTile(upgrade){
+        const {background, tile} = this.makeTile(this.shopX, UPGRADES_Y, getInitials(upgrade.name));
+        upgrade.tile = tile.setVisible(false);
+
+        this.addHover(background, UPGRADES_Y, () => this.getUpgradeInfo(upgrade)).on('pointerdown', () => {
+            this.buyUpgrade(upgrade)
+        })
+    }
+
+    addHover(target, tooltipY, getInfo){
+        return target.setInteractive()
+            .on('pointerover', () => this.showTooltip(tooltipY, getInfo))
+            .on('pointerout', () => this.hideTooltip())
+    }
+
+    showTooltip(y, getInfo){
+        this.tooltipY = y;
+        this.tooltipInfo = getInfo;
+        this.tooltip.setVisible(true);
+        this.updateTooltip();
+    }
+
+    hideTooltip(){
+        this.tooltipInfo = null;
+        this.tooltip.setVisible(false);
+    }
+
+    updateTooltip(){
+        if (!this.tooltipInfo) return;
+        this.tooltip.setText(this.tooltipInfo());
+        this.tooltip.setY(Math.min(this.tooltipY, this.scale.height - this.tooltip.height - 20));
+    }
+
+    getBuildingInfo(building){
+        const each = this.getBuildingProduction(building);
+        return [
+            building.name,
+            `Owned: ${building.count}`,
+            `Cost: ${formatNumber(this.getCost(building))} points`,
+            `Each: ${compactNumber.format(each)} points/s`,
+            `Total: ${compactNumber.format(each * building.count)} points/s`
+        ].join('\n');
+    }
+
+    getUpgradeInfo(upgrade){
+        return [
+            upgrade.name,
+            `Cost: ${formatNumber(upgrade.cost)} points`,
+            upgrade.description
+        ].join('\n');
+    }
+
     addScore(amount){
         this.score += amount
     }
@@ -85,6 +200,7 @@ export default class MainScene extends Phaser.Scene{
         if (this.score >= cost) {
             this.addScore(-cost);
             building.count++;
+            this.layoutUpgrades()
         }
     }
 
@@ -93,6 +209,7 @@ export default class MainScene extends Phaser.Scene{
         if (this.score < upgrade.cost) return;
         this.addScore(-upgrade.cost);
         upgrade.bought = true;
+        this.hideTooltip()
         this.layoutUpgrades()
     }
 
@@ -108,36 +225,44 @@ export default class MainScene extends Phaser.Scene{
         let production = building.production;
         for (const u of this.upgrades){
             if (u.bought && u.type === "building" && u.target === building.id) production *= u.multiplier;
+            if (u.bought && u.type === "global") production *= u.multiplier;
         }
         return production;
     }
 
     updateScoreText(){
-        this.scoreText.setText(`Score: ${Math.floor(this.score)}`)
+        this.scoreText.setText(`Score: ${formatNumber(this.score)}`)
     }
     
-    updateBuildingText(){
+    updateShopState(){
         for(const building of this.buildings){
-            building.label.setText(`${building.name}(${building.count}), cost: ${this.getCost(building)} points`)
+            building.row.setAlpha(this.score >= this.getCost(building) ? 1 : 0.5)
+            building.countText.setText(`${building.count}`)
+        }
+        for(const upgrade of this.upgrades){
+            upgrade.tile.setAlpha(this.score >= upgrade.cost ? 1 : 0.5)
         }
     }
 
-    updateUpgradeText(){
-        for(const upgrade of this.upgrades){
-            upgrade.label.setText(`${upgrade.name}, cost: ${upgrade.cost} points`)
-        }
+    isUpgradeAvailable(upgrade){
+        if (upgrade.bought) return false;
+        if (upgrade.type !== "building") return true;
+        return this.findBuildingById(upgrade.target).count >= (upgrade.unlockAt ?? 1);
     }
 
     layoutUpgrades(){
-        const {height} = this.scale;
-        let y = height * 0.55;
+        const shown = this.upgrades.filter(u => this.isUpgradeAvailable(u)).slice(0, MAX_VISIBLE_UPGRADES);
+        let x = this.shopX;
         for (const upgrade of this.upgrades){
-            if (upgrade.bought){
-                upgrade.label.setVisible(false);
+            if (!shown.includes(upgrade)){
+                upgrade.tile.setVisible(false);
             } else {
-                upgrade.label.setVisible(true);
-                this.tweens.add({targets: upgrade.label, y: y, duration: 200});
-                y += upgrade.label.height + 15;
+                if (upgrade.tile.visible){
+                    this.tweens.add({targets: upgrade.tile, x: x, duration: 200});
+                } else {
+                    upgrade.tile.setX(x).setVisible(true);
+                }
+                x += TILE_SIZE + TILE_GAP;
             }
         }
     }
@@ -147,10 +272,9 @@ export default class MainScene extends Phaser.Scene{
     }
 
     refreshUi(){
-        this.updateBuildingText()
         this.updateScoreText()
-        this.updateUpgradeText()
-      
+        this.updateShopState()
+        this.updateTooltip()
     }
 
     update(time, delta){
