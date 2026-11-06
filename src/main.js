@@ -16,32 +16,40 @@ const BUILDINGS = [
     {id: 10, name: "hollow rift", cost: 900000000, production: 1300000}
 ]
 
-const UPGRADES = [
+const CLICK_UPGRADES = [
     {id: 1, type: "click", target: "clickPower", name: "Gloves", cost: 100, multiplier: 2.0, description: "Doubles the amount of points per click."},
+    {id: 5, type: "click", target: "clickPower", name: "Iron Knuckles", cost: 1500, multiplier: 2.0, description: "Doubles the amount of points per click."},
+    {id: 13, type: "click", target: "clickPower", name: "Golden Touch", cost: 200000, multiplier: 3.0, description: "Triples the amount of points per click."},
+    {id: 19, type: "click", target: "clickPower", name: "Hollow Grip", cost: 50000000, multiplier: 5.0, description: "Multiplies the amount of points per click by 5."},
+]
+
+const GLOBAL_UPGRADES = [
+    {id: 10, type: "global", target: "production", name: "Trade Routes", cost: 60000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
+    {id: 16, type: "global", target: "production", name: "Guild Charter", cost: 5000000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
+    {id: 21, type: "global", target: "production", name: "Golden Age", cost: 300000000, multiplier: 2.0, description: "Doubles the production of all buildings."},
+    {id: 24, type: "global", target: "production", name: "Hollow Awakening", cost: 40000000000, multiplier: 3.0, description: "Triples the production of all buildings."},
+]
+
+const BUILDING_UPGRADES = [
+    {id: 6, type: "building", target: 1, unlockAt: 10, name: "Irrigation", cost: 2500, multiplier: 2.0, description: "Doubles the amount of points per farm."},
     {id: 2, type: "building", target: 1, name: "Better seeds", cost: 200, multiplier: 2.0, description: "Doubles the amount of points per farm."},
     {id: 3, type: "building", target: 2, name: "Getting an Upgrade!", cost: 500, multiplier: 2.0, description: "Doubles the amount of points per mine."},
-    {id: 4, type: "building", target: 3, name: "Industrialization", cost: 1000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
-    {id: 5, type: "click", target: "clickPower", name: "Iron Knuckles", cost: 1500, multiplier: 2.0, description: "Doubles the amount of points per click."},
-    {id: 6, type: "building", target: 1, unlockAt: 10, name: "Irrigation", cost: 2500, multiplier: 2.0, description: "Doubles the amount of points per farm."},
     {id: 7, type: "building", target: 2, unlockAt: 10, name: "Steel Pickaxes", cost: 6000, multiplier: 2.0, description: "Doubles the amount of points per mine."},
-    {id: 8, type: "building", target: 4, name: "Steam Engines", cost: 22000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
+    {id: 4, type: "building", target: 3, name: "Industrialization", cost: 1000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
     {id: 9, type: "building", target: 3, unlockAt: 10, name: "Assembly Lines", cost: 25000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
-    {id: 10, type: "global", target: "production", name: "Trade Routes", cost: 60000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
+    {id: 8, type: "building", target: 4, name: "Steam Engines", cost: 22000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
     {id: 11, type: "building", target: 4, unlockAt: 10, name: "Express Lines", cost: 150000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
     {id: 12, type: "building", target: 5, name: "Cargo Cranes", cost: 180000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
-    {id: 13, type: "click", target: "clickPower", name: "Golden Touch", cost: 200000, multiplier: 3.0, description: "Triples the amount of points per click."},
     {id: 14, type: "building", target: 5, unlockAt: 10, name: "Deep Water Docks", cost: 1200000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
     {id: 15, type: "building", target: 6, name: "Compound Interest", cost: 1500000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
-    {id: 16, type: "global", target: "production", name: "Guild Charter", cost: 5000000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
     {id: 17, type: "building", target: 6, unlockAt: 10, name: "Offshore Accounts", cost: 10000000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
     {id: 18, type: "building", target: 7, name: "Peer Review", cost: 13000000, multiplier: 2.0, description: "Doubles the amount of points per laboratory."},
-    {id: 19, type: "click", target: "clickPower", name: "Hollow Grip", cost: 50000000, multiplier: 5.0, description: "Multiplies the amount of points per click by 5."},
     {id: 20, type: "building", target: 8, name: "Bigger Lenses", cost: 130000000, multiplier: 2.0, description: "Doubles the amount of points per observatory."},
-    {id: 21, type: "global", target: "production", name: "Golden Age", cost: 300000000, multiplier: 2.0, description: "Doubles the production of all buildings."},
     {id: 22, type: "building", target: 9, name: "Reusable Rockets", cost: 1300000000, multiplier: 2.0, description: "Doubles the amount of points per spaceport."},
     {id: 23, type: "building", target: 10, name: "Stable Anchors", cost: 13000000000, multiplier: 2.0, description: "Doubles the amount of points per hollow rift."},
-    {id: 24, type: "global", target: "production", name: "Hollow Awakening", cost: 40000000000, multiplier: 3.0, description: "Triples the production of all buildings."}
 ]
+
+const UPGRADES = [...CLICK_UPGRADES, ...GLOBAL_UPGRADES, ...BUILDING_UPGRADES].sort((a, b) => a.cost - b.cost)
 
 const MAX_VISIBLE_UPGRADES = 8
 
