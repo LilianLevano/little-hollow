@@ -97,6 +97,8 @@ const PLAY_AREA_X = 500;
 const SHOP_X = 1012;
 const SHOP_WIDTH = 880;
 
+const SCORE_FRAME_Y = 130;
+
 const compactNumber = new Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 2})
 
 function formatNumber(value){
@@ -105,6 +107,14 @@ function formatNumber(value){
 
 function getInitials(name){
     return name.split(' ').slice(0, 2).map(word => word[0].toUpperCase()).join('')
+}
+
+function textStyle(size, color = '#ffffff'){
+    return {fontFamily: FONT, fontSize: `${size}px`, color, stroke: '#1a0f2e', strokeThickness: Math.ceil(size / 8)}
+}
+
+function fitInside(image, size){
+    return image.setScale(size / Math.max(image.width, image.height))
 }
 
 export default class MainScene extends Phaser.Scene{
@@ -136,6 +146,8 @@ export default class MainScene extends Phaser.Scene{
 
     create(){
 
+        this.background = this.add.image(0, 0, 'background').setOrigin(0).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+        this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
 
         this.score = 0;
         this.buildings = BUILDINGS.map(b => ({...b, count: 0}));
@@ -146,7 +158,10 @@ export default class MainScene extends Phaser.Scene{
         const width = GAME_WIDTH;
         const height = GAME_HEIGHT;
 
-        this.scoreText = this.add.text(width * 0.15, height * 0.15, 'Score: 0', {fontSize: '48px', color: '#ffffff'}).setOrigin(0.5);
+        this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(0.5);
+        this.rubis = fitInside(this.add.image(PLAY_AREA_X - 196, SCORE_FRAME_Y + 6, 'rubis'), 72);
+        this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 6, `0`, textStyle(56, '#ffd66b')).setOrigin(0.5);
+        this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 134, `0 points/s`, textStyle(32)).setOrigin(0.5);
         this.makeClickButton(width, height);
 
         this.resetButton = this.add.text(width * 0.15, height * 0.85, 'Reset Game', {fontSize: '32px', color: '#ffffff'}).setOrigin(0.5).setInteractive().on('pointerdown', () => {
@@ -297,7 +312,8 @@ export default class MainScene extends Phaser.Scene{
     }
 
     updateScoreText(){
-        this.scoreText.setText(`Score: ${formatNumber(this.score)}`)
+        this.scoreText.setText(`${formatNumber(this.score)}`)
+        this.totalProductionText.setText(`${compactNumber.format(this.getTotalProduction())} points/s`)
     }
     
     updateShopState(){
@@ -343,16 +359,18 @@ export default class MainScene extends Phaser.Scene{
         this.updateTooltip()
     }
 
-    update(time, delta){
+    getTotalProduction(){
         let totalProduction = 0;
-
-        const elapsedTime = delta / 1000
-
         for (const building of this.buildings) {
             totalProduction += building.count * this.getBuildingProduction(building)
         }
+        return totalProduction
+    }
 
-        this.addScore(totalProduction * elapsedTime)
+    update(time, delta){
+        
+        const elapsedTime = delta / 1000;
+        this.addScore(this.getTotalProduction() * elapsedTime)
         this.refreshUi();
   
     }
