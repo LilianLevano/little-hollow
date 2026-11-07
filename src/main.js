@@ -146,7 +146,7 @@ export default class MainScene extends Phaser.Scene{
 
     create(){
 
-        this.background = this.add.image(0, 0, 'background').setOrigin(0).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+        this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
 
         this.score = 0;
@@ -159,10 +159,10 @@ export default class MainScene extends Phaser.Scene{
         const height = GAME_HEIGHT;
 
         this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(0.5);
-        this.rubis = fitInside(this.add.image(PLAY_AREA_X - 196, SCORE_FRAME_Y + 6, 'rubis'), 72);
+        fitInside(this.add.image(PLAY_AREA_X - 196, SCORE_FRAME_Y + 6, 'rubis'), 72);
         this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 6, `0`, textStyle(56, '#ffd66b')).setOrigin(0.5);
         this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 134, `0 points/s`, textStyle(32)).setOrigin(0.5);
-        this.makeClickButton(width, height);
+        this.makeClickButton();
 
         this.resetButton = this.add.text(width * 0.15, height * 0.85, 'Reset Game', {fontSize: '32px', color: '#ffffff'}).setOrigin(0.5).setInteractive().on('pointerdown', () => {
             localStorage.removeItem(SAVE_KEY)
@@ -190,10 +190,15 @@ export default class MainScene extends Phaser.Scene{
         });
     }
 
-    makeClickButton(width, height){
-        this.clickButton = this.add.image(width * 0.15, height * 0.50, 'click-image').setScale(0.3).setAlpha(0.8).setOrigin(0.5).setInteractive().on('pointerdown', () => {
-            this.addScore(this.getClickPower());
-        })
+    
+    makeClickButton(){
+        const hitArea = new Phaser.Geom.Circle(470, 430, 380);
+
+        this.clickButton = this.add.image(PLAY_AREA_X, 610, 'click-image').setScale(0.5)
+            .setInteractive({hitArea, hitAreaCallback: Phaser.Geom.Circle.Contains, useHandCursor: true})
+            .on('pointerdown', () => {
+                this.addScore(this.getClickPower());
+            })
     }
 
     makeTile(x, y, text){
