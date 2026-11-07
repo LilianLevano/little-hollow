@@ -34,61 +34,68 @@ const GLOBAL_UPGRADES = [
 
 const FARM_UPGRADES = [
     {id: 2, type: "building", target: 1, name: "Better seeds", icon: "farm-1", cost: 200, multiplier: 2.0, description: "Doubles the amount of points per farm."},
-    {id: 6, type: "building", target: 1, unlockAt: 10, name: "Irrigation", icon: "farm-2", cost: 2500, multiplier: 2.0, description: "Doubles the amount of points per farm."},
+    {id: 6, type: "building", target: 1, unlockAt: 10, name: "Even more seeds!", icon: "farm-2", cost: 2500, multiplier: 2.0, description: "Doubles the amount of points per farm."},
 ]
 
 const MINE_UPGRADES = [
-    {id: 3, type: "building", target: 2, name: "Getting an Upgrade!", icon: "mine-1", cost: 500, multiplier: 2.0, description: "Doubles the amount of points per mine."},
-    {id: 7, type: "building", target: 2, unlockAt: 10, name: "Steel Pickaxes", icon: "mine-2", cost: 6000, multiplier: 2.0, description: "Doubles the amount of points per mine."},
+    {id: 3, type: "building", target: 2, name: "Stone age!", icon: "mine-1", cost: 500, multiplier: 2.0, description: "Doubles the amount of points per mine."},
+    {id: 7, type: "building", target: 2, unlockAt: 10, name: "Getting an upgrade!", icon: "mine-2", cost: 6000, multiplier: 2.0, description: "Doubles the amount of points per mine."},
 ]
 
-const FACTORY_UPGRADEs = [
+const FACTORY_UPGRADES = [
     {id: 4, type: "building", target: 3, name: "Industrialization", icon: "factory-1", cost: 1000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
     {id: 9, type: "building", target: 3, unlockAt: 10, name: "Assembly Lines", icon: "factory-2", cost: 25000, multiplier: 2.0, description: "Doubles the amount of points per factory."},
 ]
 
 const RAILWAY_UPGRADES = [
-
+    {id: 8, type: "building", target: 4, name: "First station!", icon: "railway-1", cost: 22000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
+    {id: 11, type: "building", target: 4, unlockAt: 10, name: "Express Lines", icon: "railway-2", cost: 150000, multiplier: 2.0, description: "Doubles the amount of points per railway."},
 ]
 
 const HARBOR_UPGRADES = [
-    {id: 12, type: "building", target: 5, name: "Cargo Cranes", icon: "harbor-1", cost: 180000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
+    {id: 12, type: "building", target: 5, name: "Only a kayak?", icon: "harbor-1", cost: 180000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
     {id: 14, type: "building", target: 5, unlockAt: 10, name: "Deep Water Docks", icon: "harbor-2", cost: 1200000, multiplier: 2.0, description: "Doubles the amount of points per harbor."},
 ]
 
 const BANK_UPGRADES = [
-    {id: 15, type: "building", target: 6, name: "Compound Interest", icon: "bank-1", cost: 1500000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
+    {id: 15, type: "building", target: 6, name: "The bill collector", icon: "bank-1", cost: 1500000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
     {id: 17, type: "building", target: 6, unlockAt: 10, name: "Offshore Accounts", icon: "bank-2", cost: 10000000, multiplier: 2.0, description: "Doubles the amount of points per bank."},
 ]
 
 const LABORATORY_UPGRADES = [
-    {id: 18, type: "building", target: 7, name: "Peer Review", icon: "lab-1", cost: 13000000, multiplier: 2.0, description: "Doubles the amount of points per laboratory."},
+    {id: 18, type: "building", target: 7, name: "What's cooking?", icon: "lab-1", cost: 13000000, multiplier: 2.0, description: "Doubles the amount of points per laboratory."},
 ]
 
 const OBSERVATORY_UPGRADES = [
-    {id: 20, type: "building", target: 8, name: "Bigger Lenses", icon: "obs-1", cost: 130000000, multiplier: 2.0, description: "Doubles the amount of points per observatory."},
+    {id: 20, type: "building", target: 8, name: "Looking at the stars", icon: "obs-1", cost: 130000000, multiplier: 2.0, description: "Doubles the amount of points per observatory."},
 ]
 
 const SPACEPORT_UPGRADES = [
-    {id: 22, type: "building", target: 9, name: "Reusable Rockets", icon: "sp-1", cost: 1300000000, multiplier: 2.0, description: "Doubles the amount of points per spaceport."},
+    {id: 22, type: "building", target: 9, name: "Making contact with... ?", icon: "sp-1", cost: 1300000000, multiplier: 2.0, description: "Doubles the amount of points per spaceport."},
 ]
 
-const HOLLOW_RIFTS_UPGRADES = [
-    {id: 23, type: "building", target: 10, name: "Stable Anchors", icon: "hr-1", cost: 13000000000, multiplier: 2.0, description: "Doubles the amount of points per hollow rift."},
+const HOLLOW_RIFT_UPGRADES = [
+    {id: 23, type: "building", target: 10, name: "How did we get there?", icon: "hr-1", cost: 13000000000, multiplier: 2.0, description: "Doubles the amount of points per hollow rift."},
 ]
 
-const BUILDING_UPGRADES = [...FARM_UPGRADES, ...MINE_UPGRADES, ...FACTORY_UPGRADEs, ...RAILWAY_UPGRADES, ...HARBOR_UPGRADES, ...BANK_UPGRADES, ...LABORATORY_UPGRADES, ...OBSERVATORY_UPGRADES, ...SPACEPORT_UPGRADES, ...HOLLOW_RIFTS_UPGRADES]
+const BUILDING_UPGRADES = [...FARM_UPGRADES, ...MINE_UPGRADES, ...FACTORY_UPGRADES, ...RAILWAY_UPGRADES, ...HARBOR_UPGRADES, ...BANK_UPGRADES, ...LABORATORY_UPGRADES, ...OBSERVATORY_UPGRADES, ...SPACEPORT_UPGRADES, ...HOLLOW_RIFT_UPGRADES]
 
 const UPGRADES = [...CLICK_UPGRADES, ...GLOBAL_UPGRADES, ...BUILDING_UPGRADES].sort((a, b) => a.cost - b.cost)
 
 const MAX_VISIBLE_UPGRADES = 8
 
-const SHOP_WIDTH = 720
 const TILE_SIZE = 72
 const TILE_GAP = 12
 const UPGRADES_Y = 60
 const BUILDINGS_Y = 170
 const BUILDING_ROW_HEIGHT = 84
+
+const GAME_WIDTH = 1920;
+const GAME_HEIGHT = 1080;
+
+const PLAY_AREA_X = 500;
+const SHOP_X = 1012;
+const SHOP_WIDTH = 880;
 
 const compactNumber = new Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 2})
 
@@ -102,14 +109,33 @@ function getInitials(name){
 
 export default class MainScene extends Phaser.Scene{
     constructor(){
-            super('GameScene');
+        super('GameScene');
     }
 
     preload(){
-        this.load.image('click-image', 'assets/clic-button.png')
+
+        const ASSETS = 'assets/optimized'
+
+        this.load.image('click-image', `${ASSETS}/clic-button.png`)
+        this.load.image('background', `${ASSETS}/background.webp`)
+        this.load.image('building-contour', `${ASSETS}/building-contour.png`)
+        this.load.image('upgrade-contour', `${ASSETS}/upgrade-contour.png`)
+        this.load.image('rubis', `${ASSETS}/rubis.png`)
+        this.load.image('score-contour', `${ASSETS}/score-contour.png`)
+
+        for (const building of BUILDINGS){
+            this.load.image(building.icon, `${ASSETS}/buildings/${building.icon}.png`)
+        }
+
+        for (const upgrade of UPGRADES){
+            this.load.image(upgrade.icon, `${ASSETS}/upgrades/${upgrade.icon}.png`)
+        }
+        
+        
     }
 
     create(){
+
 
         this.score = 0;
         this.buildings = BUILDINGS.map(b => ({...b, count: 0}));
@@ -117,7 +143,9 @@ export default class MainScene extends Phaser.Scene{
 
         this.loadGame();
 
-        const {width, height} = this.scale;
+        const width = GAME_WIDTH;
+        const height = GAME_HEIGHT;
+
         this.scoreText = this.add.text(width * 0.15, height * 0.15, 'Score: 0', {fontSize: '48px', color: '#ffffff'}).setOrigin(0.5);
         this.makeClickButton(width, height);
 
@@ -126,7 +154,7 @@ export default class MainScene extends Phaser.Scene{
             this.scene.restart()
         })
 
-        this.shopX = width * 0.60;
+        
 
         this.buildings.forEach((building, index) => {
             this.makeBuildingRow(building, index)
@@ -136,7 +164,7 @@ export default class MainScene extends Phaser.Scene{
             this.makeUpgradeTile(upgrade)
         })
 
-        this.tooltip = this.add.text(this.shopX - 20, 0, '', {fontSize: '28px', color: '#ffffff', backgroundColor: '#11111b', padding: {x: 16, y: 12}, wordWrap: {width: 480}}).setOrigin(1, 0).setDepth(10).setVisible(false);
+        this.tooltip = this.add.text(SHOP_X - 20, 0, '', {fontSize: '28px', color: '#ffffff', backgroundColor: '#11111b', padding: {x: 16, y: 12}, wordWrap: {width: 480}}).setOrigin(1, 0).setDepth(10).setVisible(false);
 
         this.layoutUpgrades()
 
@@ -165,7 +193,7 @@ export default class MainScene extends Phaser.Scene{
         const {tile} = this.makeTile(0, 0, getInitials(building.name));
         const name = this.add.text(TILE_SIZE + TILE_GAP, TILE_SIZE / 2, building.name, {fontSize: '32px', color: '#ffffff'}).setOrigin(0, 0.5);
         building.countText = this.add.text(SHOP_WIDTH - TILE_GAP, TILE_SIZE / 2, `${building.count}`, {fontSize: '40px', color: '#ffffff'}).setOrigin(1, 0.5);
-        building.row = this.add.container(this.shopX, y, [rowBackground, tile, name, building.countText]);
+        building.row = this.add.container(SHOP_X, y, [rowBackground, tile, name, building.countText]);
 
         this.addHover(rowBackground, y, () => this.getBuildingInfo(building)).on('pointerdown', () => {
             this.buyBuilding(building)
@@ -173,7 +201,7 @@ export default class MainScene extends Phaser.Scene{
     }
 
     makeUpgradeTile(upgrade){
-        const {background, tile} = this.makeTile(this.shopX, UPGRADES_Y, getInitials(upgrade.name));
+        const {background, tile} = this.makeTile(SHOP_X, UPGRADES_Y, getInitials(upgrade.name));
         upgrade.tile = tile.setVisible(false);
 
         this.addHover(background, UPGRADES_Y, () => this.getUpgradeInfo(upgrade)).on('pointerdown', () => {
@@ -202,7 +230,7 @@ export default class MainScene extends Phaser.Scene{
     updateTooltip(){
         if (!this.tooltipInfo) return;
         this.tooltip.setText(this.tooltipInfo());
-        this.tooltip.setY(Math.min(this.tooltipY, this.scale.height - this.tooltip.height - 20));
+        this.tooltip.setY(Math.min(this.tooltipY, GAME_HEIGHT - this.tooltip.height - 20));
     }
 
     getBuildingInfo(building){
@@ -290,7 +318,7 @@ export default class MainScene extends Phaser.Scene{
 
     layoutUpgrades(){
         const shown = this.upgrades.filter(u => this.isUpgradeAvailable(u)).slice(0, MAX_VISIBLE_UPGRADES);
-        let x = this.shopX;
+        let x = SHOP_X;
         for (const upgrade of this.upgrades){
             if (!shown.includes(upgrade)){
                 upgrade.tile.setVisible(false);
@@ -377,8 +405,8 @@ export default class MainScene extends Phaser.Scene{
 const config = {
     type: Phaser.AUTO,
     parent: "game",
-    width: 1920,
-    height: 1080,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
     backgroundColor: '#1e1e2e',
     scale: {
         mode: Phaser.Scale.FIT,
@@ -387,5 +415,6 @@ const config = {
     scene:  [MainScene],
 }
 
-
-new Phaser.Game(config, document.fonts.load('32px ' + FONT).finally(() => {}));
+document.fonts.load(`32px "${FONT}"`).finally(() => {
+    new Phaser.Game(config);
+});
