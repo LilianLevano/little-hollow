@@ -103,6 +103,10 @@ const CARD_HEIGHT = CARD_WIDTH / 3
 const GAME_WIDTH = 1920;
 const GAME_HEIGHT = 1080;
 
+const getFitScale = (width, height) => Math.min(width / GAME_WIDTH, height / GAME_HEIGHT) * devicePixelRatio
+const AVAILABLE_SCALE = Math.max(getFitScale(screen.width, screen.height), getFitScale(innerWidth, innerHeight))
+const RENDER_SCALE = Phaser.Math.Clamp(AVAILABLE_SCALE, 1, 2)
+
 const TOOLTIP_WIDTH = 620
 const TOOLTIP_MIN_Y = 290 
 const TOOLTIP_LEFT = SHOP_X - 12 - TOOLTIP_WIDTH
@@ -120,7 +124,7 @@ function getInitials(name){
 }
 
 function textStyle(size, color = '#ffffff'){
-    return {fontFamily: FONT, fontSize: `${size}px`, color, stroke: '#1a0f2e', strokeThickness: Math.ceil(size / 8)}
+    return {fontFamily: FONT, fontSize: `${size}px`, color, stroke: '#1a0f2e', strokeThickness: Math.ceil(size / 8,), resolution: RENDER_SCALE}
 }
 
 function fitInside(image, size){
@@ -157,6 +161,8 @@ export default class MainScene extends Phaser.Scene{
     }
 
     create(){
+
+        this.cameras.main.setZoom(RENDER_SCALE).centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
 
         this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
@@ -502,8 +508,8 @@ export default class MainScene extends Phaser.Scene{
 const config = {
     type: Phaser.AUTO,
     parent: "game",
-    width: GAME_WIDTH,
-    height: GAME_HEIGHT,
+    width: Math.round(GAME_WIDTH * RENDER_SCALE),
+    height: Math.round(GAME_HEIGHT * RENDER_SCALE),
     backgroundColor: '#1e1e2e',
     scale: {
         mode: Phaser.Scale.FIT,
