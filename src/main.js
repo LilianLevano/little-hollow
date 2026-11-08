@@ -87,6 +87,8 @@ const SHOP_X = 1012;
 const SHOP_WIDTH = 880;
 
 const SCORE_FRAME_Y = 130;
+const CLICK_BUTTON_SCALE = 0.5;
+const HOVER_SCALE = 1.04;
 
 const MAX_VISIBLE_UPGRADES = 8
 
@@ -190,6 +192,17 @@ export default class MainScene extends Phaser.Scene{
         this.tooltipFrame = this.add.image(SHOP_X - 12, 0, 'building-contour').setOrigin(1, 0).setDepth(10).setVisible(false);
         this.tooltipIcon = this.add.image(TOOLTIP_LEFT + 104, 0, 'rubis').setDepth(10).setVisible(false);
         this.tooltip = this.add.text(TOOLTIP_LEFT + 176, 0, '', {...textStyle(26), wordWrap: {width: 388}}).setDepth(10).setVisible(false);
+
+        // Small rubies that burst out on clicks and purchases. Nothing is emitted until explode() is called.
+        this.particles = this.add.particles(0, 0, 'rubis', {
+            speed: {min: 160, max: 420},
+            angle: {min: 200, max: 340}, // upwards, in a fan
+            scale: {start: 0.22, end: 0},
+            gravityY: 800,
+            lifespan: 650,
+            emitting: false,
+        }).setDepth(5);
+
         this.layoutUpgrades()
 
         this.time.addEvent({
@@ -203,11 +216,34 @@ export default class MainScene extends Phaser.Scene{
     makeClickButton(){
         const hitArea = new Phaser.Geom.Circle(470, 430, 380);
 
-        this.clickButton = this.add.image(PLAY_AREA_X, 610, 'click-image').setScale(0.5)
+        this.clickButton = this.add.image(PLAY_AREA_X, 610, 'click-image').setScale(CLICK_BUTTON_SCALE)
             .setInteractive({hitArea, hitAreaCallback: Phaser.Geom.Circle.Contains, useHandCursor: true})
-            .on('pointerdown', () => {
-                this.addScore(this.getClickPower());
+            .on('pointerdown', (pointer) => {
+                const gain = this.getClickPower();
+                this.addScore(gain);
+                this.playClickEffects(pointer, gain);
             })
+    }
+
+    playClickEffects(pointer, gain){
+        // The button sinks a little, then springs back to its size
+        this.tweens.killTweensOf(this.clickButton);
+        this.clickButton.setScale(CLICK_BUTTON_SCALE * 0.94);
+        this.tweens.add({targets: this.clickButton, scale: CLICK_BUTTON_SCALE, duration: 180, ease: 'Back.out'});
+
+        // A few rubies where the player clicked
+        this.particles.explode(4, pointer.worldX, pointer.worldY);
+
+        // "+N" rises and fades out, then is removed
+        const gainText = this.add.text(pointer.worldX, pointer.worldY - 30, `+${formatNumber(gain)}`, textStyle(42, '#ffd66b')).setOrigin(0.5).setDepth(5);
+        this.tweens.add({
+            targets: gainText,
+            y: gainText.y - 110,
+            alpha: 0,
+            duration: 800,
+            ease: 'Cubic.out',
+            onComplete: () => gainText.destroy()
+        });
     }
 
     makeBuildingRow(building, index){
@@ -247,9 +283,16 @@ export default class MainScene extends Phaser.Scene{
     }
 
     addHover(target, tooltipY, getInfo, icon){
+        // target is inside a card or a tile: parentContainer is that card, which grows a little on hover
         return target.setInteractive({useHandCursor: true})
-            .on('pointerover', () => this.showTooltip(tooltipY, getInfo, icon))
-            .on('pointerout', () => this.hideTooltip())
+            .on('pointerover', () => {
+                target.parentContainer.setScale(HOVER_SCALE);
+                this.showTooltip(tooltipY, getInfo, icon);
+            })
+            .on('pointerout', () => {
+                target.parentContainer.setScale(1);
+                this.hideTooltip();
+            })
     }
 
     showTooltip(y, getInfo, icon){
@@ -313,6 +356,7 @@ export default class MainScene extends Phaser.Scene{
         if (this.score >= cost) {
             this.addScore(-cost);
             building.count++;
+            this.particles.explode(8, building.row.x, building.row.y);
             this.layoutUpgrades()
         }
     }
@@ -322,6 +366,7 @@ export default class MainScene extends Phaser.Scene{
         if (this.score < upgrade.cost) return;
         this.addScore(-upgrade.cost);
         upgrade.bought = true;
+        this.particles.explode(8, upgrade.tile.x, upgrade.tile.y);
         this.hideTooltip()
         this.layoutUpgrades()
     }
