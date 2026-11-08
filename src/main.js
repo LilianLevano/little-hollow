@@ -87,6 +87,8 @@ const MAX_VISIBLE_UPGRADES = 8
 const TILE_SIZE = 72
 const TILE_GAP = 12
 const UPGRADES_Y = 60
+const UPGRADE_SIZE = 100
+
 const BUILDINGS_Y = 170
 const BUILDING_ROW_HEIGHT = 84
 
@@ -98,6 +100,8 @@ const SHOP_X = 1012;
 const SHOP_WIDTH = 880;
 
 const SCORE_FRAME_Y = 130;
+
+const UPGRADE_GAP = (SHOP_WIDTH - UPGRADE_SIZE * MAX_VISIBLE_UPGRADES) / (MAX_VISIBLE_UPGRADES - 1);
 
 const compactNumber = new Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 2})
 
@@ -140,8 +144,6 @@ export default class MainScene extends Phaser.Scene{
         for (const upgrade of UPGRADES){
             this.load.image(upgrade.icon, `${ASSETS}/upgrades/${upgrade.icon}.png`)
         }
-        
-        
     }
 
     create(){
@@ -168,8 +170,6 @@ export default class MainScene extends Phaser.Scene{
             localStorage.removeItem(SAVE_KEY)
             this.scene.restart()
         })
-
-        
 
         this.buildings.forEach((building, index) => {
             this.makeBuildingRow(building, index)
@@ -221,16 +221,19 @@ export default class MainScene extends Phaser.Scene{
     }
 
     makeUpgradeTile(upgrade){
-        const {background, tile} = this.makeTile(SHOP_X, UPGRADES_Y, getInitials(upgrade.name));
-        upgrade.tile = tile.setVisible(false);
+        const frame = this.add.image(0, 0, 'upgrade-contour').setOrigin(0.5, 0.46).setScale(0.468);
+        const icon = fitInside(this.add.image(0, 0, upgrade.icon), UPGRADE_SIZE * 0.72);
+        const hitArea = this.add.zone(0, 0, UPGRADE_SIZE, UPGRADE_SIZE);
 
-        this.addHover(background, UPGRADES_Y, () => this.getUpgradeInfo(upgrade)).on('pointerdown', () => {
+        upgrade.tile = this.add.container(SHOP_X, UPGRADES_Y + UPGRADE_SIZE / 2, [frame, icon, hitArea]).setVisible(false);
+
+        this.addHover(hitArea, UPGRADES_Y, () => this.getUpgradeInfo(upgrade)).on('pointerdown', () => {
             this.buyUpgrade(upgrade)
         })
     }
 
     addHover(target, tooltipY, getInfo){
-        return target.setInteractive()
+        return target.setInteractive({useHandCursor: true})
             .on('pointerover', () => this.showTooltip(tooltipY, getInfo))
             .on('pointerout', () => this.hideTooltip())
     }
@@ -323,11 +326,11 @@ export default class MainScene extends Phaser.Scene{
     
     updateShopState(){
         for(const building of this.buildings){
-            building.row.setAlpha(this.score >= this.getCost(building) ? 1 : 0.5)
+            building.row.setAlpha(this.score >= this.getCost(building) ? 1 : 0.6)
             building.countText.setText(`${building.count}`)
         }
         for(const upgrade of this.upgrades){
-            upgrade.tile.setAlpha(this.score >= upgrade.cost ? 1 : 0.5)
+            upgrade.tile.setAlpha(this.score >= upgrade.cost ? 1 : 0.6)
         }
     }
 
@@ -339,7 +342,7 @@ export default class MainScene extends Phaser.Scene{
 
     layoutUpgrades(){
         const shown = this.upgrades.filter(u => this.isUpgradeAvailable(u)).slice(0, MAX_VISIBLE_UPGRADES);
-        let x = SHOP_X;
+        let x = SHOP_X + UPGRADE_SIZE / 2;
         for (const upgrade of this.upgrades){
             if (!shown.includes(upgrade)){
                 upgrade.tile.setVisible(false);
@@ -349,7 +352,7 @@ export default class MainScene extends Phaser.Scene{
                 } else {
                     upgrade.tile.setX(x).setVisible(true);
                 }
-                x += TILE_SIZE + TILE_GAP;
+                x += UPGRADE_SIZE + UPGRADE_GAP;
             }
         }
     }
