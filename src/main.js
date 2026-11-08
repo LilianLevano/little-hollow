@@ -101,7 +101,9 @@ const CARD_HEIGHT = CARD_WIDTH / 3
 const GAME_WIDTH = 1920;
 const GAME_HEIGHT = 1080;
 
-
+const TOOLTIP_WIDTH = 620
+const TOOLTIP_MIN_Y = 290 
+const TOOLTIP_LEFT = SHOP_X - 12 - TOOLTIP_WIDTH
 
 const UPGRADE_GAP = (SHOP_WIDTH - UPGRADE_SIZE * MAX_VISIBLE_UPGRADES) / (MAX_VISIBLE_UPGRADES - 1);
 
@@ -185,8 +187,9 @@ export default class MainScene extends Phaser.Scene{
             this.makeUpgradeTile(upgrade)
         })
 
-        this.tooltip = this.add.text(SHOP_X - 20, 0, '', {fontSize: '28px', color: '#ffffff', backgroundColor: '#11111b', padding: {x: 16, y: 12}, wordWrap: {width: 480}}).setOrigin(1, 0).setDepth(10).setVisible(false);
-
+        this.tooltipFrame = this.add.image(SHOP_X - 12, 0, 'building-contour').setOrigin(1, 0).setDepth(10).setVisible(false);
+        this.tooltipIcon = this.add.image(TOOLTIP_LEFT + 104, 0, 'rubis').setDepth(10).setVisible(false);
+        this.tooltip = this.add.text(TOOLTIP_LEFT + 176, 0, '', {...textStyle(26), wordWrap: {width: 388}}).setDepth(10).setVisible(false);
         this.layoutUpgrades()
 
         this.time.addEvent({
@@ -225,7 +228,7 @@ export default class MainScene extends Phaser.Scene{
 
         building.row = this.add.container(x, y, [frame, image, name, rubis, building.costText, building.countText, hitArea]);
 
-        this.addHover(hitArea, y - CARD_HEIGHT / 2, () => this.getBuildingInfo(building)).on('pointerdown', () => {
+        this.addHover(hitArea, y - CARD_HEIGHT / 2, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
             this.buyBuilding(building)
         })
     }
@@ -238,33 +241,43 @@ export default class MainScene extends Phaser.Scene{
 
         upgrade.tile = this.add.container(SHOP_X, UPGRADES_Y + UPGRADE_SIZE / 2, [frame, icon, hitArea]).setVisible(false);
 
-        this.addHover(hitArea, UPGRADES_Y, () => this.getUpgradeInfo(upgrade)).on('pointerdown', () => {
+        this.addHover(hitArea, UPGRADES_Y, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
             this.buyUpgrade(upgrade)
         })
     }
 
-    addHover(target, tooltipY, getInfo){
+    addHover(target, tooltipY, getInfo, icon){
         return target.setInteractive({useHandCursor: true})
-            .on('pointerover', () => this.showTooltip(tooltipY, getInfo))
+            .on('pointerover', () => this.showTooltip(tooltipY, getInfo, icon))
             .on('pointerout', () => this.hideTooltip())
     }
 
-    showTooltip(y, getInfo){
+    showTooltip(y, getInfo, icon){
         this.tooltipY = y;
         this.tooltipInfo = getInfo;
+        this.tooltipIcon.setTexture(icon);
+        fitInside(this.tooltipIcon, 96);
+        this.tooltipIcon.setVisible(true);
         this.tooltip.setVisible(true);
+        this.tooltipFrame.setVisible(true);
         this.updateTooltip();
     }
 
     hideTooltip(){
         this.tooltipInfo = null;
         this.tooltip.setVisible(false);
+        this.tooltipFrame.setVisible(false);
+        this.tooltipIcon.setVisible(false);
     }
 
     updateTooltip(){
         if (!this.tooltipInfo) return;
         this.tooltip.setText(this.tooltipInfo());
-        this.tooltip.setY(Math.min(this.tooltipY, GAME_HEIGHT - this.tooltip.height - 20));
+        const frameHeight = this.tooltip.height + 96;
+        const y = Math.min(Math.max(this.tooltipY, TOOLTIP_MIN_Y), GAME_HEIGHT - frameHeight - 20);
+        this.tooltipFrame.setY(y).setDisplaySize(TOOLTIP_WIDTH, frameHeight);
+        this.tooltip.setY(y + 48);
+        this.tooltipIcon.setY(y + frameHeight / 2);
     }
 
     getBuildingInfo(building){
