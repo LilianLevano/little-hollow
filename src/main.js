@@ -82,24 +82,26 @@ const BUILDING_UPGRADES = [...FARM_UPGRADES, ...MINE_UPGRADES, ...FACTORY_UPGRAD
 
 const UPGRADES = [...CLICK_UPGRADES, ...GLOBAL_UPGRADES, ...BUILDING_UPGRADES].sort((a, b) => a.cost - b.cost)
 
-const MAX_VISIBLE_UPGRADES = 8
-
-const TILE_SIZE = 72
-const TILE_GAP = 12
-const UPGRADES_Y = 60
-const UPGRADE_SIZE = 100
-
-const BUILDINGS_Y = 170
-const BUILDING_ROW_HEIGHT = 84
-
-const GAME_WIDTH = 1920;
-const GAME_HEIGHT = 1080;
-
 const PLAY_AREA_X = 500;
 const SHOP_X = 1012;
 const SHOP_WIDTH = 880;
 
 const SCORE_FRAME_Y = 130;
+
+const MAX_VISIBLE_UPGRADES = 8
+
+const UPGRADES_Y = 90
+const UPGRADE_SIZE = 100
+
+const BUILDINGS_Y = 226
+const CARD_GAP = 8
+const CARD_WIDTH = (SHOP_WIDTH - CARD_GAP) / 2   
+const CARD_HEIGHT = CARD_WIDTH / 3               
+
+const GAME_WIDTH = 1920;
+const GAME_HEIGHT = 1080;
+
+
 
 const UPGRADE_GAP = (SHOP_WIDTH - UPGRADE_SIZE * MAX_VISIBLE_UPGRADES) / (MAX_VISIBLE_UPGRADES - 1);
 
@@ -119,6 +121,10 @@ function textStyle(size, color = '#ffffff'){
 
 function fitInside(image, size){
     return image.setScale(size / Math.max(image.width, image.height))
+}
+
+function capitalize(name){
+    return name[0].toUpperCase() + name.slice(1)
 }
 
 export default class MainScene extends Phaser.Scene{
@@ -201,24 +207,29 @@ export default class MainScene extends Phaser.Scene{
             })
     }
 
-    makeTile(x, y, text){
-        const background = this.add.rectangle(0, 0, TILE_SIZE, TILE_SIZE, 0x45475a).setOrigin(0);
-        const initials = this.add.text(TILE_SIZE / 2, TILE_SIZE / 2, text, {fontSize: '32px', color: '#ffffff'}).setOrigin(0.5);
-        return {background, tile: this.add.container(x, y, [background, initials])};
-    }
-
     makeBuildingRow(building, index){
-        const y = BUILDINGS_Y + index * BUILDING_ROW_HEIGHT;
-        const rowBackground = this.add.rectangle(0, 0, SHOP_WIDTH, TILE_SIZE, 0x313244).setOrigin(0);
-        const {tile} = this.makeTile(0, 0, getInitials(building.name));
-        const name = this.add.text(TILE_SIZE + TILE_GAP, TILE_SIZE / 2, building.name, {fontSize: '32px', color: '#ffffff'}).setOrigin(0, 0.5);
-        building.countText = this.add.text(SHOP_WIDTH - TILE_GAP, TILE_SIZE / 2, `${building.count}`, {fontSize: '40px', color: '#ffffff'}).setOrigin(1, 0.5);
-        building.row = this.add.container(SHOP_X, y, [rowBackground, tile, name, building.countText]);
+        const column = index % 2;
+        const line = Math.floor(index / 2);
+        const x = SHOP_X + CARD_WIDTH / 2 + column * (CARD_WIDTH + CARD_GAP);
+        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + line * (CARD_HEIGHT + CARD_GAP);
+        const left = -CARD_WIDTH / 2;
 
-        this.addHover(rowBackground, y, () => this.getBuildingInfo(building)).on('pointerdown', () => {
+        const frame = this.add.image(0, 0, 'building-contour').setDisplaySize(CARD_WIDTH, CARD_HEIGHT);
+        const image = fitInside(this.add.image(left + 76 , -2, building.icon), 122);
+        const name = this.add.text(left + 146, -40, capitalize(building.name), textStyle(32))
+        const rubis = fitInside(this.add.image(left + 158, 20, 'rubis'), 30)
+        building.costText = this.add.text(left + 176, 20, '', textStyle(26, '#ffd66b')).setOrigin(0, 0.5);
+        building.countText = this.add.text(-left - 34, 0, '', textStyle(46)).setOrigin(1, 0.5);
+
+        const hitArea = this.add.zone(0, 0, CARD_WIDTH, CARD_HEIGHT);
+
+        building.row = this.add.container(x, y, [frame, image, name, rubis, building.costText, building.countText, hitArea]);
+
+        this.addHover(hitArea, y - CARD_HEIGHT / 2, () => this.getBuildingInfo(building)).on('pointerdown', () => {
             this.buyBuilding(building)
         })
     }
+
 
     makeUpgradeTile(upgrade){
         const frame = this.add.image(0, 0, 'upgrade-contour').setOrigin(0.5, 0.46).setScale(0.468);
@@ -259,7 +270,7 @@ export default class MainScene extends Phaser.Scene{
     getBuildingInfo(building){
         const each = this.getBuildingProduction(building);
         return [
-            building.name,
+            capitalize(building.name),
             `Owned: ${building.count}`,
             `Cost: ${formatNumber(this.getCost(building))} points`,
             `Each: ${compactNumber.format(each)} points/s`,
@@ -269,7 +280,7 @@ export default class MainScene extends Phaser.Scene{
 
     getUpgradeInfo(upgrade){
         return [
-            upgrade.name,
+            capitalize(upgrade.name),
             `Cost: ${formatNumber(upgrade.cost)} points`,
             upgrade.description
         ].join('\n');
@@ -326,7 +337,9 @@ export default class MainScene extends Phaser.Scene{
     
     updateShopState(){
         for(const building of this.buildings){
-            building.row.setAlpha(this.score >= this.getCost(building) ? 1 : 0.6)
+            const cost = this.getCost(building);
+            building.row.setAlpha(this.score >= cost ? 1 : 0.6)
+            building.costText.setText(formatNumber(cost))
             building.countText.setText(`${building.count}`)
         }
         for(const upgrade of this.upgrades){
