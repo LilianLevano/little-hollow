@@ -124,7 +124,7 @@ function getInitials(name){
 }
 
 function textStyle(size, color = '#ffffff'){
-    return {fontFamily: FONT, fontSize: `${size}px`, color, stroke: '#1a0f2e', strokeThickness: Math.ceil(size / 8,), resolution: RENDER_SCALE}
+    return {fontFamily: FONT, fontSize: `${size}px`, color, stroke: '#1a0f2e', strokeThickness: Math.ceil(size / 8), resolution: RENDER_SCALE}
 }
 
 function fitInside(image, size){
