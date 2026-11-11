@@ -8,7 +8,7 @@ import {
     PLAY_AREA_X, SCORE_FRAME_Y, CLICK_BUTTON_SCALE,
     SHOP_X, HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
-    BUILDINGS_Y, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
+    BUILDINGS_Y, SHOP_LIST_HEIGHT, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
     TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
     VILLAGE_ICON, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES,
 } from '../constants.js';
@@ -59,6 +59,9 @@ export default class GameScene extends Phaser.Scene{
             this.scene.restart()
         })
 
+        this.shopList = this.add.container(0, 0);
+        this.shopScroll = 0;
+
         this.buildings.forEach((building, index) => {
             this.makeBuildingRow(building, index)
         })
@@ -86,7 +89,11 @@ export default class GameScene extends Phaser.Scene{
         }).setDepth(5);
 
         this.layoutUpgrades()
-         this.add.rectangle(500, 0, 2, GAME_HEIGHT, 0xff0000).setOrigin(0); // DEBUG, à supprimer
+        this.input.on('wheel', (pointer, over, deltaX, deltaY) => {
+            this.scrollShop(pointer, deltaY)
+        })
+
+         this.input.setPollAlways();
 
         this.time.addEvent({
             delay: 5000,
@@ -145,10 +152,21 @@ export default class GameScene extends Phaser.Scene{
         const hitArea = this.add.zone(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
         building.row = this.add.container(x, y, [frame, image, name, rubis, building.costText, building.countText, hitArea]);
+        this.shopList.add(building.row);
 
-        this.addHover(hitArea, y - CARD_HEIGHT / 2, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
+        this.addHover(hitArea, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
             this.buyBuilding(building)
         })
+    }
+
+    scrollShop(pointer, deltaY){
+        if (pointer.worldX < SHOP_X) return;
+
+        const listHeight = this.buildings.length * (CARD_HEIGHT + CARD_GAP) - CARD_GAP;
+        const maxScroll = Math.max(0, listHeight - SHOP_LIST_HEIGHT);
+
+        this.shopScroll = Phaser.Math.Clamp(this.shopScroll + deltaY, 0, maxScroll);
+        this.shopList.y = -this.shopScroll;
     }
 
     makeUpgradeTile(upgrade){
@@ -158,7 +176,7 @@ export default class GameScene extends Phaser.Scene{
 
         upgrade.tile = this.add.container(SHOP_X, UPGRADES_Y + UPGRADE_SIZE / 2, [frame, icon, hitArea]).setVisible(false);
 
-        this.addHover(hitArea, UPGRADES_Y, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
+        this.addHover(hitArea, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
             this.buyUpgrade(upgrade)
         })
     }
@@ -197,12 +215,12 @@ export default class GameScene extends Phaser.Scene{
         row.bringToTop(building.villageCount);
     }
 
-    addHover(target, tooltipY, getInfo, icon){
+    addHover(target, getInfo, icon){
         // target is inside a card or a tile: parentContainer is that card, which grows a little on hover
         return target.setInteractive({useHandCursor: true})
             .on('pointerover', () => {
                 target.parentContainer.setScale(HOVER_SCALE);
-                this.showTooltip(tooltipY, getInfo, icon);
+                this.showTooltip(target, getInfo, icon);
             })
             .on('pointerout', () => {
                 target.parentContainer.setScale(1);
@@ -210,8 +228,8 @@ export default class GameScene extends Phaser.Scene{
             })
     }
 
-    showTooltip(y, getInfo, icon){
-        this.tooltipY = y;
+    showTooltip(target, getInfo, icon){
+        this.tooltipTarget = target;
         this.tooltipInfo = getInfo;
         this.tooltipIcon.setTexture(icon);
         fitInside(this.tooltipIcon, 96);
@@ -232,7 +250,9 @@ export default class GameScene extends Phaser.Scene{
         if (!this.tooltipInfo) return;
         this.tooltip.setText(this.tooltipInfo());
         const frameHeight = this.tooltip.height + 96;
-        const y = Math.min(Math.max(this.tooltipY, TOOLTIP_MIN_Y), GAME_HEIGHT - frameHeight - 20);
+        const top = this.tooltipTarget.getBounds().y;
+        const y = Math.min(Math.max(top, TOOLTIP_MIN_Y), GAME_HEIGHT - frameHeight - 20);
+
         this.tooltipFrame.setY(y).setDisplaySize(TOOLTIP_WIDTH, frameHeight);
         this.tooltip.setY(y + 48);
         this.tooltipIcon.setY(y + frameHeight / 2);
@@ -272,7 +292,7 @@ export default class GameScene extends Phaser.Scene{
             this.addScore(-cost);
             building.count++;
             this.updateVillageRow(building, true);
-            this.particles.explode(8, building.row.x, building.row.y);
+            this.particles.explode(8, building.row.x, building.row.y + this.shopList.y);
             this.layoutUpgrades()
         }
     }

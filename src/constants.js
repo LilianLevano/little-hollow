@@ -38,6 +38,7 @@ export const UPGRADE_SIZE = 100
 export const UPGRADE_GAP = (SHOP_WIDTH - UPGRADE_SIZE * MAX_VISIBLE_UPGRADES) / (MAX_VISIBLE_UPGRADES - 1);
 
 export const BUILDINGS_Y = 226
+export const SHOP_LIST_HEIGHT = GAME_HEIGHT - 20 - BUILDINGS_Y
 export const CARD_GAP = 8
 export const CARD_WIDTH = SHOP_WIDTH 
 export const CARD_HEIGHT = CARD_WIDTH / 3
