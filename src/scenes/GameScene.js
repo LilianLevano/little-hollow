@@ -6,7 +6,7 @@ import {writeSave, readSave, deleteSave} from '../save.js';
 import {
     ASSETS, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE,
     PLAY_AREA_X, SCORE_FRAME_Y, CLICK_BUTTON_SCALE,
-    SHOP_X, HOVER_SCALE,
+    SHOP_X, SHOP_WIDTH,  HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
     BUILDINGS_Y, SHOP_LIST_HEIGHT, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
     TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
@@ -65,6 +65,11 @@ export default class GameScene extends Phaser.Scene{
         this.buildings.forEach((building, index) => {
             this.makeBuildingRow(building, index)
         })
+
+        const listShape = this.make.graphics().fillStyle(0xffffff).fillRect(SHOP_X - 20, BUILDINGS_Y, SHOP_WIDTH + 40, GAME_HEIGHT - BUILDINGS_Y);
+        this.shopList.enableFilters().filters.external.addMask(listShape)
+
+        this.add.zone(SHOP_X - 20, 0, SHOP_WIDTH + 40, BUILDINGS_Y).setOrigin(0).setInteractive();
 
         this.upgrades.forEach((upgrade) => {
             this.makeUpgradeTile(upgrade)
