@@ -3,13 +3,15 @@ import {BUILDINGS} from '../data/buildings.js';
 import {UPGRADES} from '../data/upgrades.js';
 import {formatNumber, compactNumber, capitalize, textStyle, fitInside} from '../utils.js';
 import {writeSave, readSave, deleteSave} from '../save.js';
+import ScrollPanel from '../ui/ScrollPanel.js';
 import {
     ASSETS, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE,
     PLAY_AREA_X, SCORE_FRAME_Y, CLICK_BUTTON_SCALE,
-    SHOP_X, HOVER_SCALE,
+    SHOP_X, SHOP_WIDTH,  HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
-    BUILDINGS_Y, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
-    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT,
+    BUILDINGS_Y, SHOP_LIST_HEIGHT, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
+    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_HEIGHT, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
+    VILLAGE_ICON, VILLAGE_COPY_X, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES,
 } from '../constants.js';
 
 export default class GameScene extends Phaser.Scene{
@@ -47,26 +49,36 @@ export default class GameScene extends Phaser.Scene{
 
         this.loadGame();
 
-        const width = GAME_WIDTH;
-        const height = GAME_HEIGHT;
-
-        this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(0.5);
-        fitInside(this.add.image(PLAY_AREA_X - 196, SCORE_FRAME_Y + 6, 'rubis'), 72);
-        this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 6, `0`, textStyle(56, '#ffd66b')).setOrigin(0.5);
-        this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 134, `0 points/s`, textStyle(32)).setOrigin(0.5);
+        this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(SCORE_FRAME_SCALE);
+        fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
+        this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 4, `0`, textStyle(40, '#ffd66b')).setOrigin(0.5);
+        this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 96, `0 points/s`, textStyle(28)).setOrigin(0.5);
         this.makeClickButton();
 
-        this.resetButton = this.add.text(width * 0.15, height * 0.85, 'Reset Game', {fontSize: '32px', color: '#ffffff'}).setOrigin(0.5).setInteractive().on('pointerdown', () => {
+        this.resetButton = this.add.text(PLAY_AREA_X, 1030, 'Reset Game', textStyle(22)).setOrigin(0.5).setInteractive().on('pointerdown', () => {
             deleteSave()
             this.scene.restart()
         })
 
+        // The building cards scroll under the upgrades. The window is 20px wider on each side, so a hovered card isn't cut.
+        // It must be made before the upgrade tiles, so the tiles stay on top of the zones that block the hidden cards.
+        this.shopPanel = new ScrollPanel(this, SHOP_X - 20, BUILDINGS_Y, SHOP_WIDTH + 40, SHOP_LIST_HEIGHT, CARD_HEIGHT + CARD_GAP, {blockOutside: true});
+        this.shopList = this.shopPanel.content;
+
         this.buildings.forEach((building, index) => {
             this.makeBuildingRow(building, index)
         })
+        this.shopPanel.setContentHeight(this.buildings.length * (CARD_HEIGHT + CARD_GAP) - CARD_GAP);
 
         this.upgrades.forEach((upgrade) => {
             this.makeUpgradeTile(upgrade)
+        })
+
+        // The village scrolls in the middle column, in a window as high as the shop list
+        this.villagePanel = new ScrollPanel(this, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_HEIGHT, VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP);
+
+        this.buildings.forEach((building, index) => {
+            this.makeVillageRow(building, index)
         })
 
         this.tooltipFrame = this.add.image(SHOP_X - 12, 0, 'building-contour').setOrigin(1, 0).setDepth(10).setVisible(false);
@@ -85,6 +97,9 @@ export default class GameScene extends Phaser.Scene{
 
         this.layoutUpgrades()
 
+        // When a list scrolls, cards move under a pointer that doesn't: check what is under it every frame, not only when it moves
+        this.input.setPollAlways();
+
         this.time.addEvent({
             delay: 5000,
             loop: true,
@@ -95,7 +110,7 @@ export default class GameScene extends Phaser.Scene{
     makeClickButton(){
         const hitArea = new Phaser.Geom.Circle(470, 430, 380);
 
-        this.clickButton = this.add.image(PLAY_AREA_X, 610, 'click-image').setScale(CLICK_BUTTON_SCALE)
+        this.clickButton = this.add.image(PLAY_AREA_X, 560, 'click-image').setScale(CLICK_BUTTON_SCALE)
             .setInteractive({hitArea, hitAreaCallback: Phaser.Geom.Circle.Contains, useHandCursor: true})
             .on('pointerdown', (pointer) => {
                 const gain = this.getClickPower();
@@ -128,8 +143,8 @@ export default class GameScene extends Phaser.Scene{
     makeBuildingRow(building, index){
         const column = index % 2;
         const line = Math.floor(index / 2);
-        const x = SHOP_X + CARD_WIDTH / 2 + column * (CARD_WIDTH + CARD_GAP);
-        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + line * (CARD_HEIGHT + CARD_GAP);
+        const x = SHOP_X + CARD_WIDTH / 2;
+        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + index * (CARD_HEIGHT + CARD_GAP);
         const left = -CARD_WIDTH / 2;
 
         const frame = this.add.image(0, 0, 'building-contour').setDisplaySize(CARD_WIDTH, CARD_HEIGHT);
@@ -142,8 +157,9 @@ export default class GameScene extends Phaser.Scene{
         const hitArea = this.add.zone(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
         building.row = this.add.container(x, y, [frame, image, name, rubis, building.costText, building.countText, hitArea]);
+        this.shopList.add(building.row);
 
-        this.addHover(hitArea, y - CARD_HEIGHT / 2, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
+        this.addHover(hitArea, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
             this.buyBuilding(building)
         })
     }
@@ -155,17 +171,61 @@ export default class GameScene extends Phaser.Scene{
 
         upgrade.tile = this.add.container(SHOP_X, UPGRADES_Y + UPGRADE_SIZE / 2, [frame, icon, hitArea]).setVisible(false);
 
-        this.addHover(hitArea, UPGRADES_Y, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
+        this.addHover(hitArea, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
             this.buyUpgrade(upgrade)
         })
     }
 
-    addHover(target, tooltipY, getInfo, icon){
+    makeVillageRow(building, index){
+        const y = VILLAGE_Y + index * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP);
+
+        const band = this.add.graphics().fillStyle(0x1a0f2e, 0.6).fillRoundedRect(0, 0, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, 16);
+        building.villageCount = this.add.text(VILLAGE_WIDTH - 12, VILLAGE_ROW_HEIGHT / 2, '', textStyle(34)).setOrigin(1, 0.5);
+
+        building.villageRow = this.add.container(VILLAGE_X, y, [band, building.villageCount]);
+        this.villagePanel.content.add(building.villageRow);
+        building.villageCopies = 0;
+        this.updateVillageRow(building, false);
+    }
+
+    updateVillageRow(building, animate){
+        const row = building.villageRow;
+        row.setVisible(building.count > 0);
+        building.villageCount.setText(`x${building.count}`)
+
+        while (building.villageCopies < Math.min(building.count, VILLAGE_MAX_COPIES)){
+            const i = building.villageCopies;
+            const x = VILLAGE_COPY_X + i * VILLAGE_COPY_STEP
+            const y = VILLAGE_ROW_HEIGHT - 8 - (i % 2) * 8;
+            const copy = fitInside(this.add.image(x, y, building.icon).setOrigin(0.5, 1), VILLAGE_ICON);
+
+            row.add(copy)
+
+            if(animate){
+                const size = copy.scale;
+                copy.setScale(0);
+                this.tweens.add({targets: copy, scale: size, duration:300, ease: 'Back.out'})
+            }
+            building.villageCopies++;
+        }
+        row.bringToTop(building.villageCount);
+
+        // A new type of building adds a row: the village may now be taller than its window
+        this.villagePanel.setContentHeight(this.getVillageHeight());
+    }
+
+    // Height of the village, from its first row down to the last row the player owns (empty rows below don't count)
+    getVillageHeight(){
+        const lastOwned = this.buildings.findLastIndex(building => building.count > 0);
+        return (lastOwned + 1) * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP) - VILLAGE_ROW_GAP;
+    }
+
+    addHover(target, getInfo, icon){
         // target is inside a card or a tile: parentContainer is that card, which grows a little on hover
         return target.setInteractive({useHandCursor: true})
             .on('pointerover', () => {
                 target.parentContainer.setScale(HOVER_SCALE);
-                this.showTooltip(tooltipY, getInfo, icon);
+                this.showTooltip(target, getInfo, icon);
             })
             .on('pointerout', () => {
                 target.parentContainer.setScale(1);
@@ -173,8 +233,8 @@ export default class GameScene extends Phaser.Scene{
             })
     }
 
-    showTooltip(y, getInfo, icon){
-        this.tooltipY = y;
+    showTooltip(target, getInfo, icon){
+        this.tooltipTarget = target;
         this.tooltipInfo = getInfo;
         this.tooltipIcon.setTexture(icon);
         fitInside(this.tooltipIcon, 96);
@@ -195,7 +255,9 @@ export default class GameScene extends Phaser.Scene{
         if (!this.tooltipInfo) return;
         this.tooltip.setText(this.tooltipInfo());
         const frameHeight = this.tooltip.height + 96;
-        const y = Math.min(Math.max(this.tooltipY, TOOLTIP_MIN_Y), GAME_HEIGHT - frameHeight - 20);
+        const top = this.tooltipTarget.getBounds().y;
+        const y = Math.min(Math.max(top, TOOLTIP_MIN_Y), GAME_HEIGHT - frameHeight - 20);
+
         this.tooltipFrame.setY(y).setDisplaySize(TOOLTIP_WIDTH, frameHeight);
         this.tooltip.setY(y + 48);
         this.tooltipIcon.setY(y + frameHeight / 2);
@@ -234,7 +296,8 @@ export default class GameScene extends Phaser.Scene{
         if (this.score >= cost) {
             this.addScore(-cost);
             building.count++;
-            this.particles.explode(8, building.row.x, building.row.y);
+            this.updateVillageRow(building, true);
+            this.particles.explode(8, building.row.x, building.row.y + this.shopList.y);
             this.layoutUpgrades()
         }
     }
