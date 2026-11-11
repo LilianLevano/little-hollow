@@ -18,7 +18,15 @@ export const SCORE_FRAME_Y = 130;
 export const SCORE_FRAME_SCALE = 0.34;
 export const CLICK_BUTTON_SCALE = 0.42;
 
-
+// Middle: the village, one row per type of building (like Cookie Clicker)
+export const VILLAGE_X = 515
+export const VILLAGE_Y = 60
+export const VILLAGE_WIDTH = 480
+export const VILLAGE_ROW_HEIGHT = 88
+export const VILLAGE_ROW_GAP = 8
+export const VILLAGE_ICON = 64
+export const VILLAGE_COPY_STEP = 38
+export const VILLAGE_MAX_COPIES = 10
 // Right side: the shop
 export const SHOP_X = 1012;
 export const SHOP_WIDTH = 880;

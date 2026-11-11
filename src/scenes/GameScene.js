@@ -9,7 +9,8 @@ import {
     SHOP_X, HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
     BUILDINGS_Y, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
-    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE
+    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
+    VILLAGE_ICON, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES,
 } from '../constants.js';
 
 export default class GameScene extends Phaser.Scene{
@@ -64,6 +65,10 @@ export default class GameScene extends Phaser.Scene{
 
         this.upgrades.forEach((upgrade) => {
             this.makeUpgradeTile(upgrade)
+        })
+
+        this.buildings.forEach((building, index) => {
+            this.makeVillageRow(building, index)
         })
 
         this.tooltipFrame = this.add.image(SHOP_X - 12, 0, 'building-contour').setOrigin(1, 0).setDepth(10).setVisible(false);
@@ -158,6 +163,40 @@ export default class GameScene extends Phaser.Scene{
         })
     }
 
+    makeVillageRow(building, index){
+        const y = VILLAGE_Y + index * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP);
+
+        const band = this.add.graphics().fillStyle(0x1a0f2e, 0.6).fillRoundedRect(0, 0, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, 16);
+        building.villageCount =this.add.text(VILLAGE_WIDTH - 12, VILLAGE_ROW_HEIGHT / 2, '', textStyle(26)).setOrigin(1, 0.5);
+
+        building.villageRow = this.add.container(VILLAGE_X, y, [band, building.villageCount]);
+        building.villageCopies = 0;
+        this.updateVillageRow(building, false);
+    }
+
+    updateVillageRow(building, animate){
+        const row = building.villageRow;
+        row.setVisible(building.count > 0);
+        building.villageCount.setText(`x${building.count}`)
+
+        while (building.villageCopies < Math.min(building.count, VILLAGE_MAX_COPIES)){
+            const i = building.villageCopies;
+            const x = 40 + i * VILLAGE_COPY_STEP
+            const y = VILLAGE_ROW_HEIGHT - 8 - (i % 2) * 8;
+            const copy = fitInside(this.add.image(x, y, building.icon).setOrigin(0.5, 1), VILLAGE_ICON);
+
+            row.add(copy)
+
+            if(animate){
+                const size = copy.scale;
+                copy.setScale(0);
+                this.tweens.add({targets: copy, scale: size, duration:300, ease: 'Back.out'})
+            }
+            building.villageCopies++;
+        }
+        row.bringToTop(building.villageCount);
+    }
+
     addHover(target, tooltipY, getInfo, icon){
         // target is inside a card or a tile: parentContainer is that card, which grows a little on hover
         return target.setInteractive({useHandCursor: true})
@@ -232,6 +271,7 @@ export default class GameScene extends Phaser.Scene{
         if (this.score >= cost) {
             this.addScore(-cost);
             building.count++;
+            this.updateVillageRow(building, true);
             this.particles.explode(8, building.row.x, building.row.y);
             this.layoutUpgrades()
         }
