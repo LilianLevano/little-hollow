@@ -131,8 +131,8 @@ export default class GameScene extends Phaser.Scene{
     makeBuildingRow(building, index){
         const column = index % 2;
         const line = Math.floor(index / 2);
-        const x = SHOP_X + CARD_WIDTH / 2 + column * (CARD_WIDTH + CARD_GAP);
-        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + line * (CARD_HEIGHT + CARD_GAP);
+        const x = SHOP_X + CARD_WIDTH / 2;
+        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + index * (CARD_HEIGHT + CARD_GAP);
         const left = -CARD_WIDTH / 2;
 
         const frame = this.add.image(0, 0, 'building-contour').setDisplaySize(CARD_WIDTH, CARD_HEIGHT);

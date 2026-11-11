@@ -28,18 +28,18 @@ export const VILLAGE_ICON = 64
 export const VILLAGE_COPY_STEP = 38
 export const VILLAGE_MAX_COPIES = 10
 // Right side: the shop
-export const SHOP_X = 1012;
-export const SHOP_WIDTH = 880;
+export const SHOP_WIDTH = 436;
+export const SHOP_X = GAME_WIDTH - 28 - SHOP_WIDTH;
 export const HOVER_SCALE = 1.04;
 
-export const MAX_VISIBLE_UPGRADES = 8
+export const MAX_VISIBLE_UPGRADES = 4
 export const UPGRADES_Y = 90
 export const UPGRADE_SIZE = 100
 export const UPGRADE_GAP = (SHOP_WIDTH - UPGRADE_SIZE * MAX_VISIBLE_UPGRADES) / (MAX_VISIBLE_UPGRADES - 1);
 
 export const BUILDINGS_Y = 226
 export const CARD_GAP = 8
-export const CARD_WIDTH = (SHOP_WIDTH - CARD_GAP) / 2
+export const CARD_WIDTH = SHOP_WIDTH 
 export const CARD_HEIGHT = CARD_WIDTH / 3
 
 export const TOOLTIP_WIDTH = 620
