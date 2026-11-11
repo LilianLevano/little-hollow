@@ -3,14 +3,15 @@ import {BUILDINGS} from '../data/buildings.js';
 import {UPGRADES} from '../data/upgrades.js';
 import {formatNumber, compactNumber, capitalize, textStyle, fitInside} from '../utils.js';
 import {writeSave, readSave, deleteSave} from '../save.js';
+import ScrollPanel from '../ui/ScrollPanel.js';
 import {
     ASSETS, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE,
     PLAY_AREA_X, SCORE_FRAME_Y, CLICK_BUTTON_SCALE,
     SHOP_X, SHOP_WIDTH,  HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
     BUILDINGS_Y, SHOP_LIST_HEIGHT, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
-    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
-    VILLAGE_ICON, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES,
+    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_HEIGHT, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
+    VILLAGE_ICON, VILLAGE_COPY_X, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES,
 } from '../constants.js';
 
 export default class GameScene extends Phaser.Scene{
@@ -59,21 +60,22 @@ export default class GameScene extends Phaser.Scene{
             this.scene.restart()
         })
 
-        this.shopList = this.add.container(0, 0);
-        this.shopScroll = 0;
+        // The building cards scroll under the upgrades. The window is 20px wider on each side, so a hovered card isn't cut.
+        // It must be made before the upgrade tiles, so the tiles stay on top of the zones that block the hidden cards.
+        this.shopPanel = new ScrollPanel(this, SHOP_X - 20, BUILDINGS_Y, SHOP_WIDTH + 40, SHOP_LIST_HEIGHT, CARD_HEIGHT + CARD_GAP, {blockOutside: true});
+        this.shopList = this.shopPanel.content;
 
         this.buildings.forEach((building, index) => {
             this.makeBuildingRow(building, index)
         })
-
-        const listShape = this.make.graphics().fillStyle(0xffffff).fillRect(SHOP_X - 20, BUILDINGS_Y, SHOP_WIDTH + 40, GAME_HEIGHT - BUILDINGS_Y);
-        this.shopList.enableFilters().filters.external.addMask(listShape)
-
-        this.add.zone(SHOP_X - 20, 0, SHOP_WIDTH + 40, BUILDINGS_Y).setOrigin(0).setInteractive();
+        this.shopPanel.setContentHeight(this.buildings.length * (CARD_HEIGHT + CARD_GAP) - CARD_GAP);
 
         this.upgrades.forEach((upgrade) => {
             this.makeUpgradeTile(upgrade)
         })
+
+        // The village scrolls in the middle column, in a window as high as the shop list
+        this.villagePanel = new ScrollPanel(this, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_HEIGHT, VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP);
 
         this.buildings.forEach((building, index) => {
             this.makeVillageRow(building, index)
@@ -94,11 +96,9 @@ export default class GameScene extends Phaser.Scene{
         }).setDepth(5);
 
         this.layoutUpgrades()
-        this.input.on('wheel', (pointer, over, deltaX, deltaY) => {
-            this.scrollShop(pointer, deltaY)
-        })
 
-         this.input.setPollAlways();
+        // When a list scrolls, cards move under a pointer that doesn't: check what is under it every frame, not only when it moves
+        this.input.setPollAlways();
 
         this.time.addEvent({
             delay: 5000,
@@ -164,16 +164,6 @@ export default class GameScene extends Phaser.Scene{
         })
     }
 
-    scrollShop(pointer, deltaY){
-        if (pointer.worldX < SHOP_X) return;
-
-        const listHeight = this.buildings.length * (CARD_HEIGHT + CARD_GAP) - CARD_GAP;
-        const maxScroll = Math.max(0, listHeight - SHOP_LIST_HEIGHT);
-
-        this.shopScroll = Phaser.Math.Clamp(this.shopScroll + deltaY, 0, maxScroll);
-        this.shopList.y = -this.shopScroll;
-    }
-
     makeUpgradeTile(upgrade){
         const frame = this.add.image(0, 0, 'upgrade-contour').setOrigin(0.5, 0.46).setScale(0.468);
         const icon = fitInside(this.add.image(0, 0, upgrade.icon), UPGRADE_SIZE * 0.72);
@@ -190,9 +180,10 @@ export default class GameScene extends Phaser.Scene{
         const y = VILLAGE_Y + index * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP);
 
         const band = this.add.graphics().fillStyle(0x1a0f2e, 0.6).fillRoundedRect(0, 0, VILLAGE_WIDTH, VILLAGE_ROW_HEIGHT, 16);
-        building.villageCount =this.add.text(VILLAGE_WIDTH - 12, VILLAGE_ROW_HEIGHT / 2, '', textStyle(26)).setOrigin(1, 0.5);
+        building.villageCount = this.add.text(VILLAGE_WIDTH - 12, VILLAGE_ROW_HEIGHT / 2, '', textStyle(34)).setOrigin(1, 0.5);
 
         building.villageRow = this.add.container(VILLAGE_X, y, [band, building.villageCount]);
+        this.villagePanel.content.add(building.villageRow);
         building.villageCopies = 0;
         this.updateVillageRow(building, false);
     }
@@ -204,7 +195,7 @@ export default class GameScene extends Phaser.Scene{
 
         while (building.villageCopies < Math.min(building.count, VILLAGE_MAX_COPIES)){
             const i = building.villageCopies;
-            const x = 40 + i * VILLAGE_COPY_STEP
+            const x = VILLAGE_COPY_X + i * VILLAGE_COPY_STEP
             const y = VILLAGE_ROW_HEIGHT - 8 - (i % 2) * 8;
             const copy = fitInside(this.add.image(x, y, building.icon).setOrigin(0.5, 1), VILLAGE_ICON);
 
@@ -218,6 +209,15 @@ export default class GameScene extends Phaser.Scene{
             building.villageCopies++;
         }
         row.bringToTop(building.villageCount);
+
+        // A new type of building adds a row: the village may now be taller than its window
+        this.villagePanel.setContentHeight(this.getVillageHeight());
+    }
+
+    // Height of the village, from its first row down to the last row the player owns (empty rows below don't count)
+    getVillageHeight(){
+        const lastOwned = this.buildings.findLastIndex(building => building.count > 0);
+        return (lastOwned + 1) * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP) - VILLAGE_ROW_GAP;
     }
 
     addHover(target, getInfo, icon){

@@ -18,15 +18,6 @@ export const SCORE_FRAME_Y = 130;
 export const SCORE_FRAME_SCALE = 0.34;
 export const CLICK_BUTTON_SCALE = 0.42;
 
-// Middle: the village, one row per type of building (like Cookie Clicker)
-export const VILLAGE_X = 515
-export const VILLAGE_Y = 60
-export const VILLAGE_WIDTH = 480
-export const VILLAGE_ROW_HEIGHT = 88
-export const VILLAGE_ROW_GAP = 8
-export const VILLAGE_ICON = 64
-export const VILLAGE_COPY_STEP = 38
-export const VILLAGE_MAX_COPIES = 10
 // Right side: the shop
 export const SHOP_WIDTH = 436;
 export const SHOP_X = GAME_WIDTH - 28 - SHOP_WIDTH;
@@ -46,3 +37,19 @@ export const CARD_HEIGHT = CARD_WIDTH / 3
 export const TOOLTIP_WIDTH = 620
 export const TOOLTIP_MIN_Y = 290
 export const TOOLTIP_LEFT = SHOP_X - 12 - TOOLTIP_WIDTH
+
+// Middle: the village, one row per type of building (like Cookie Clicker), up to the shop.
+// It scrolls in a window as high as the shop list, so both lists line up.
+export const VILLAGE_X = 515
+export const VILLAGE_Y = BUILDINGS_Y
+export const VILLAGE_WIDTH = SHOP_X - 16 - VILLAGE_X
+export const VILLAGE_HEIGHT = SHOP_LIST_HEIGHT
+export const VILLAGE_ROW_HEIGHT = 124
+export const VILLAGE_ROW_GAP = 8
+export const VILLAGE_ICON = 104
+export const VILLAGE_COPY_X = 56
+export const VILLAGE_COPY_STEP = 60
+export const VILLAGE_MAX_COPIES = 13
+
+// Scrolling lists (shop and village): how close to an edge the items start to fade out
+export const SCROLL_FADE = 64
