@@ -9,7 +9,7 @@ import {
     SHOP_X, HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
     BUILDINGS_Y, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
-    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT,
+    TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE
 } from '../constants.js';
 
 export default class GameScene extends Phaser.Scene{
@@ -47,16 +47,13 @@ export default class GameScene extends Phaser.Scene{
 
         this.loadGame();
 
-        const width = GAME_WIDTH;
-        const height = GAME_HEIGHT;
-
-        this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(0.5);
-        fitInside(this.add.image(PLAY_AREA_X - 196, SCORE_FRAME_Y + 6, 'rubis'), 72);
-        this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 6, `0`, textStyle(56, '#ffd66b')).setOrigin(0.5);
-        this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 134, `0 points/s`, textStyle(32)).setOrigin(0.5);
+        this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(SCORE_FRAME_SCALE);
+        fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
+        this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 4, `0`, textStyle(40, '#ffd66b')).setOrigin(0.5);
+        this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 96, `0 points/s`, textStyle(28)).setOrigin(0.5);
         this.makeClickButton();
 
-        this.resetButton = this.add.text(width * 0.15, height * 0.85, 'Reset Game', {fontSize: '32px', color: '#ffffff'}).setOrigin(0.5).setInteractive().on('pointerdown', () => {
+        this.resetButton = this.add.text(PLAY_AREA_X, 1030, 'Reset Game', textStyle(22)).setOrigin(0.5).setInteractive().on('pointerdown', () => {
             deleteSave()
             this.scene.restart()
         })
@@ -84,6 +81,7 @@ export default class GameScene extends Phaser.Scene{
         }).setDepth(5);
 
         this.layoutUpgrades()
+         this.add.rectangle(500, 0, 2, GAME_HEIGHT, 0xff0000).setOrigin(0); // DEBUG, à supprimer
 
         this.time.addEvent({
             delay: 5000,
@@ -95,7 +93,7 @@ export default class GameScene extends Phaser.Scene{
     makeClickButton(){
         const hitArea = new Phaser.Geom.Circle(470, 430, 380);
 
-        this.clickButton = this.add.image(PLAY_AREA_X, 610, 'click-image').setScale(CLICK_BUTTON_SCALE)
+        this.clickButton = this.add.image(PLAY_AREA_X, 560, 'click-image').setScale(CLICK_BUTTON_SCALE)
             .setInteractive({hitArea, hitAreaCallback: Phaser.Geom.Circle.Contains, useHandCursor: true})
             .on('pointerdown', (pointer) => {
                 const gain = this.getClickPower();

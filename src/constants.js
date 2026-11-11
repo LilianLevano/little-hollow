@@ -13,9 +13,11 @@ const AVAILABLE_SCALE = Math.max(getFitScale(screen.width, screen.height), getFi
 export const RENDER_SCALE = Phaser.Math.Clamp(AVAILABLE_SCALE, 1, 2)
 
 // Left side: score and click button
-export const PLAY_AREA_X = 500;
+export const PLAY_AREA_X = 255;
 export const SCORE_FRAME_Y = 130;
-export const CLICK_BUTTON_SCALE = 0.5;
+export const SCORE_FRAME_SCALE = 0.34;
+export const CLICK_BUTTON_SCALE = 0.42;
+
 
 // Right side: the shop
 export const SHOP_X = 1012;
