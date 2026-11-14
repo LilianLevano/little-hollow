@@ -37,6 +37,7 @@ export default class GameScene extends Phaser.Scene{
 
         this.load.audio('click-sound', `${ASSETS}/sounds/click/click-pop-scatter.wav`)
         this.load.audio('buy-upgrade-sound', `${ASSETS}/sounds/upgrade/upgrade-gem-burst.wav`)
+        this.load.audio('buy-building-sound', `${ASSETS}/sounds/building/building-hammer.wav`)
     }
 
     create(){
@@ -303,6 +304,7 @@ export default class GameScene extends Phaser.Scene{
             building.count++;
             this.updateVillageRow(building, true);
             this.particles.explode(8, building.row.x, building.row.y + this.shopList.y);
+            this.sound.play('buy-building-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
             this.layoutUpgrades()
         }
     }
