@@ -12,6 +12,9 @@ const getFitScale = (width, height) => Math.min(width / GAME_WIDTH, height / GAM
 const AVAILABLE_SCALE = Math.max(getFitScale(screen.width, screen.height), getFitScale(innerWidth, innerHeight))
 export const RENDER_SCALE = Phaser.Math.Clamp(AVAILABLE_SCALE, 1, 2)
 
+// The light the screen turns into when the rift opens: the start screen fades out to it, the game fades in from it
+export const RIFT_LIGHT = {r: 236, g: 220, b: 255};
+
 // Left side: score and click button
 export const PLAY_AREA_X = 255;
 export const SCORE_FRAME_Y = 130;

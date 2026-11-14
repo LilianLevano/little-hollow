@@ -5,7 +5,7 @@ import {formatNumber, compactNumber, capitalize, textStyle, fitInside} from '../
 import {writeSave, readSave, deleteSave} from '../save.js';
 import ScrollPanel from '../ui/ScrollPanel.js';
 import {
-    ASSETS, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE,
+    ASSETS, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, RIFT_LIGHT,
     PLAY_AREA_X, SCORE_FRAME_Y, CLICK_BUTTON_SCALE,
     SHOP_X, SHOP_WIDTH,  HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
@@ -23,7 +23,8 @@ export default class GameScene extends Phaser.Scene{
     create(){
 
         this.cameras.main.setZoom(RENDER_SCALE).centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
-        this.cameras.main.fadeIn(800)
+        // Fades in from the light of the rift, the color the start screen ends on
+        this.cameras.main.fadeIn(900, RIFT_LIGHT.r, RIFT_LIGHT.g, RIFT_LIGHT.b)
 
         this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
