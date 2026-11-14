@@ -35,7 +35,8 @@ export default class GameScene extends Phaser.Scene{
             this.load.image(upgrade.icon, `${ASSETS}/upgrades/${upgrade.icon}.png`)
         }
 
-        this.load.audio('click-sound', `${ASSETS}/sounds/click-pop-scatter.wav`)
+        this.load.audio('click-sound', `${ASSETS}/sounds/click/click-pop-scatter.wav`)
+        this.load.audio('buy-upgrade-sound', `${ASSETS}/sounds/upgrade/upgrade-gem-burst.wav`)
     }
 
     create(){
@@ -312,6 +313,7 @@ export default class GameScene extends Phaser.Scene{
         this.addScore(-upgrade.cost);
         upgrade.bought = true;
         this.particles.explode(8, upgrade.tile.x, upgrade.tile.y);
+        this.sound.play('buy-upgrade-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
         this.hideTooltip()
         this.layoutUpgrades()
     }
