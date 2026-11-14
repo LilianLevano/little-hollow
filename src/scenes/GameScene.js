@@ -34,6 +34,8 @@ export default class GameScene extends Phaser.Scene{
         for (const upgrade of UPGRADES){
             this.load.image(upgrade.icon, `${ASSETS}/upgrades/${upgrade.icon}.png`)
         }
+
+        this.load.audio('click-sound', `${ASSETS}/sounds/click-pop-scatter.wav`)
     }
 
     create(){
@@ -124,6 +126,8 @@ export default class GameScene extends Phaser.Scene{
         this.tweens.killTweensOf(this.clickButton);
         this.clickButton.setScale(CLICK_BUTTON_SCALE * 0.94);
         this.tweens.add({targets: this.clickButton, scale: CLICK_BUTTON_SCALE, duration: 180, ease: 'Back.out'});
+
+        this.sound.play('click-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
 
         // A few rubies where the player clicked
         this.particles.explode(4, pointer.worldX, pointer.worldY);
