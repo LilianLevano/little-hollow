@@ -19,30 +19,11 @@ export default class GameScene extends Phaser.Scene{
         super('GameScene');
     }
 
-    preload(){
-        this.load.image('click-image', `${ASSETS}/clic-button.png`)
-        this.load.image('background', `${ASSETS}/background.webp`)
-        this.load.image('building-contour', `${ASSETS}/building-contour.png`)
-        this.load.image('upgrade-contour', `${ASSETS}/upgrade-contour.png`)
-        this.load.image('rubis', `${ASSETS}/rubis.png`)
-        this.load.image('score-contour', `${ASSETS}/score-contour.png`)
-
-        for (const building of BUILDINGS){
-            this.load.image(building.icon, `${ASSETS}/buildings/${building.icon}.png`)
-        }
-
-        for (const upgrade of UPGRADES){
-            this.load.image(upgrade.icon, `${ASSETS}/upgrades/${upgrade.icon}.png`)
-        }
-
-        this.load.audio('click-sound', `${ASSETS}/sounds/click/click-pop-scatter.wav`)
-        this.load.audio('buy-upgrade-sound', `${ASSETS}/sounds/upgrade/upgrade-gem-burst.wav`)
-        this.load.audio('buy-building-sound', `${ASSETS}/sounds/building/building-hammer.wav`)
-    }
 
     create(){
 
         this.cameras.main.setZoom(RENDER_SCALE).centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        this.cameras.main.fadeIn(800)
 
         this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import '@fontsource/lilita-one'
 import './style.css'
 import GameScene from './scenes/GameScene.js';
+import StartScene from './scenes/StartScene.js';
 import {FONT, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE} from './constants.js';
 
 const config = {
@@ -14,7 +15,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [GameScene],
+    scene: [StartScene, GameScene],
 }
 
 // Text is drawn once on a canvas: the font has to be ready before the game starts
