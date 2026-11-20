@@ -9,7 +9,7 @@ const GLOBAL_UPGRADES = [
     {id: 10, type: "global", target: "production", name: "Trade Routes", icon: "global-1", cost: 60000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
     {id: 16, type: "global", target: "production", name: "Guild Charter", icon: "global-2", cost: 5000000, multiplier: 1.5, description: "Multiplies the production of all buildings by 1.5."},
     {id: 21, type: "global", target: "production", name: "Golden Age", icon: "global-3", cost: 300000000, multiplier: 2.0, description: "Doubles the production of all buildings."},
-    {id: 24, type: "global", target: "production", name: "Hollow Awakening", icon: "global-4", cost: 40000000000, multiplier: 3.0, description: "Triples the production of all buildings."},
+    {id: 24, type: "global", target: "production", name: "Hollow Awakening", icon: "global-4", cost: 150000000000, multiplier: 3.0, description: "Triples the production of all buildings."},
 ]
 
 const FARM_UPGRADES = [
