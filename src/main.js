@@ -4,6 +4,7 @@ import './style.css'
 import GameScene from './scenes/GameScene.js';
 import StartScene from './scenes/StartScene.js';
 import {FONT, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE} from './constants.js';
+import { setupHardwareWarning } from './hwWarning.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -21,4 +22,5 @@ const config = {
 // Text is drawn once on a canvas: the font has to be ready before the game starts
 document.fonts.load(`32px "${FONT}"`).finally(() => {
     new Phaser.Game(config);
+    setupHardwareWarning(game);
 });

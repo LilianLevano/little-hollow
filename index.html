@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="src/style.css">
   </head>
   <body>
+    <div id="hw-warning" class="hw-warning hidden">
+      <p>
+        ⚠️ The game is running slowly: hardware acceleration seems to be disabled.
+        Turn it on in your browser settings
+        (Chrome: <em>Settings → System → Use graphics acceleration when available</em>),
+        then restart your browser.
+      </p>
+      <button id="hw-warning-close" class="hw-warning-close">OK</button>
+    </div>
     <div id="game"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
