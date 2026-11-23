@@ -28,6 +28,19 @@ export default class GameScene extends Phaser.Scene{
         this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
 
+        this.fireflies = this.add.particles(0, 0, 'firefly', {
+            x: {min: 0, max: GAME_WIDTH},
+            y: {min: 0, max: GAME_HEIGHT},
+            lifespan: {min:4000, max: 8000},
+            speedX: {min: -20, max: 20 },
+            speedY: {min: -30, max: -5},
+            scale: {min: 0.4, max: 1},
+            alpha: {values: [0, 0.8, 0.3, 0.9, 0]},
+            frequency: 400,
+            blendMode: 'ADD',
+            advance: 6000
+        })
+
         this.score = 0;
         this.buildings = BUILDINGS.map(b => ({...b, count: 0}));
         this.upgrades = UPGRADES.map(u => ({...u, bought: false})).sort((a, b) => a.cost - b.cost);
@@ -36,7 +49,6 @@ export default class GameScene extends Phaser.Scene{
 
         this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(SCORE_FRAME_SCALE);
         this.scoreRubis = fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
-        this.rubis = [this.scoreRubis]
         this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 4, `0`, textStyle(40, '#ffd66b')).setOrigin(0.5);
         this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 96, `0 points/s`, textStyle(28)).setOrigin(0.5);
         this.makeClickButton();
@@ -93,9 +105,15 @@ export default class GameScene extends Phaser.Scene{
         });
 
         this.time.addEvent({
-            delay: 300,
+            delay: 1700,
             loop: true,
-            callback: () => this.sparkle(Phaser.Utils.Array.GetRandom(this.rubis))
+            callback: () => {this.sparkle(this.scoreRubis)}
+        })
+
+        this.time.addEvent({
+            delay: 500,
+            loop: true,
+            callback: () => this.sparkleShop()
         })
 
         
@@ -113,8 +131,15 @@ export default class GameScene extends Phaser.Scene{
         if (rubis.parentContainer) {
             rubis.parentContainer.add(sparkle);
         }
+    }
 
+    sparkleShop(){
+        const building = Phaser.Utils.Array.GetRandom(this.buildings)
 
+        if(this.score >= this.getCost(building)){
+            this.sparkle(building.rubis)
+        }
+       
     }
     makeClickButton(){
         const hitArea = new Phaser.Geom.Circle(470, 430, 380);
@@ -176,7 +201,7 @@ export default class GameScene extends Phaser.Scene{
             this.buyBuilding(building)
         })
 
-         this.rubis.push(rubis)
+        building.rubis = rubis;
     }
 
     makeUpgradeTile(upgrade){
