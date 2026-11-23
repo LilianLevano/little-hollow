@@ -45,6 +45,24 @@ export default class StartScene extends Phaser.Scene {
   }
 
   create() {
+
+    const star = this.make.graphics();
+
+    star.fillStyle(0xffffff);
+    star.fillPoints([
+      { x: 32, y: 0 },  
+      { x: 38, y: 26 },
+      { x: 64, y: 32 },
+      { x: 38, y: 38 },
+      { x: 32, y: 64 }, 
+      { x: 26, y: 38 },
+      { x: 0, y: 32 },  
+      { x: 26, y: 26 },
+    ], true);
+
+    star.generateTexture("sparkle", 64, 64);
+    star.destroy();   
+    
     this.cameras.main
       .setZoom(RENDER_SCALE)
       .centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);

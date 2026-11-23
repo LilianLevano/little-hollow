@@ -35,7 +35,7 @@ export default class GameScene extends Phaser.Scene{
         this.loadGame();
 
         this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(SCORE_FRAME_SCALE);
-        fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
+        this.scoreRubis = fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
         this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 4, `0`, textStyle(40, '#ffd66b')).setOrigin(0.5);
         this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 96, `0 points/s`, textStyle(28)).setOrigin(0.5);
         this.makeClickButton();
@@ -90,8 +90,27 @@ export default class GameScene extends Phaser.Scene{
             loop: true,
             callback: () => this.saveGame()
         });
+
+        this.time.addEvent({
+            delay: 1500,
+            loop: true,
+            callback: () => this.sparkle(this.scoreRubis)
+        })
+
+        
     }
 
+    sparkle(rubis){
+        const x = rubis.x + Phaser.Math.FloatBetween(-0.2, 0.2) * rubis.displayWidth;
+        const y = rubis.y + Phaser.Math.FloatBetween(-0.3, 0.3) * rubis.displayHeight;
+
+        const sparkle = this.add.image(x, y, 'sparkle').setScale(0)
+        const size = rubis.displayHeight * 0.5 / 64
+
+        this.tweens.add({targets: sparkle, duration: 5000, onComplete: () => sparkle.destroy(), scale:{value: size, duration: 250, yoyo: true}, angle: 180, ease:'Sine.inOut'})
+
+
+    }
     makeClickButton(){
         const hitArea = new Phaser.Geom.Circle(470, 430, 380);
 
