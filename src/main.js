@@ -21,6 +21,6 @@ const config = {
 
 // Text is drawn once on a canvas: the font has to be ready before the game starts
 document.fonts.load(`32px "${FONT}"`).finally(() => {
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
     setupHardwareWarning(game);
 });
