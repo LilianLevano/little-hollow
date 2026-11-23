@@ -11,7 +11,7 @@ import {
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
     BUILDINGS_Y, SHOP_LIST_HEIGHT, CARD_GAP, CARD_WIDTH, CARD_HEIGHT,
     TOOLTIP_WIDTH, TOOLTIP_MIN_Y, TOOLTIP_LEFT, SCORE_FRAME_SCALE, VILLAGE_X, VILLAGE_Y, VILLAGE_WIDTH, VILLAGE_HEIGHT, VILLAGE_ROW_HEIGHT, VILLAGE_ROW_GAP,
-    VILLAGE_ICON, VILLAGE_COPY_X, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES,
+    VILLAGE_ICON, VILLAGE_COPY_X, VILLAGE_COPY_STEP, VILLAGE_MAX_COPIES, PORTAL_X, PORTAL_Y
 } from '../constants.js';
 
 export default class GameScene extends Phaser.Scene{
@@ -27,6 +27,15 @@ export default class GameScene extends Phaser.Scene{
 
         this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
+
+        this.portalGlow = this.add.image(PORTAL_X, PORTAL_Y, 'portal-glow').setBlendMode('ADD');
+        this.tweens.add({targets: this.portalGlow,
+            alpha:{from: 0.3, to: 0.8},
+            scale: {from: 1, to: 1.3},
+            duration: 2500,
+            ease: 'Sine.inOut',
+            yoyo: true,
+            repeat: -1});
 
         this.fireflies = this.add.particles(0, 0, 'firefly', {
             x: {min: 0, max: GAME_WIDTH},

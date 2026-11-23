@@ -53,3 +53,7 @@ export const VILLAGE_MAX_COPIES = 13
 
 // Scrolling lists (shop and village): how close to an edge the items start to fade out
 export const SCROLL_FADE = 64
+
+// Center of the portail in the background image, where its glow pulses
+export const PORTAL_X = 558
+export const PORTAL_Y  = 257

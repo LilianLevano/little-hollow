@@ -76,6 +76,14 @@ export default class StartScene extends Phaser.Scene {
     glow.generateTexture("firefly", 32, 32);
     glow.destroy();
 
+    const portal = this.make.graphics();
+    for (let radius = 64; radius > 0; radius -= 2){
+      portal.fillStyle(0xb430f3, 0.06);
+      portal.fillCircle(64, 64, radius);
+    }
+    portal.generateTexture("portal-glow", 128, 128);
+    portal.destroy();
+    
     this.cameras.main
       .setZoom(RENDER_SCALE)
       .centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
