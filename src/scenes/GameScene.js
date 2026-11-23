@@ -5,7 +5,7 @@ import {formatNumber, compactNumber, capitalize, textStyle, fitInside} from '../
 import {writeSave, readSave, deleteSave} from '../save.js';
 import ScrollPanel from '../ui/ScrollPanel.js';
 import {
-    ASSETS, GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE,
+    GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE,
     PLAY_AREA_X, SCORE_FRAME_Y, CLICK_BUTTON_SCALE,
     SHOP_X, SHOP_WIDTH,  HOVER_SCALE,
     MAX_VISIBLE_UPGRADES, UPGRADES_Y, UPGRADE_SIZE, UPGRADE_GAP,
@@ -15,27 +15,32 @@ import {
 } from '../constants.js';
 
 export default class GameScene extends Phaser.Scene{
+
+    // ==================== SETUP AND GAME LOOP ====================
+    // create() builds the whole scene once. update() runs every frame: production first, then the display.
+
     constructor(){
         super('GameScene');
     }
 
-
     create(){
-
         this.cameras.main.setZoom(RENDER_SCALE).centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
         this.cameras.main.fadeIn(800)
 
+        // Background: the image, the glow on its portal and the fireflies. They are made first, so they stay behind everything.
         this.background = this.add.image(0, 0, 'background').setOrigin(0);
         this.background.setScale(Math.max(GAME_WIDTH / this.background.width, GAME_HEIGHT / this.background.height));
 
         this.portalGlow = this.add.image(PORTAL_X, PORTAL_Y, 'portal-glow').setBlendMode('ADD');
-        this.tweens.add({targets: this.portalGlow,
+        this.tweens.add({
+            targets: this.portalGlow,
             alpha:{from: 0.3, to: 0.8},
             scale: {from: 1, to: 1.3},
             duration: 2500,
             ease: 'Sine.inOut',
             yoyo: true,
-            repeat: -1});
+            repeat: -1
+        });
 
         this.fireflies = this.add.particles(0, 0, 'firefly', {
             x: {min: 0, max: GAME_WIDTH},
@@ -50,12 +55,14 @@ export default class GameScene extends Phaser.Scene{
             advance: 6000
         })
 
+        // Game state: a new game, then the save (if there is one) on top of it
         this.score = 0;
         this.buildings = BUILDINGS.map(b => ({...b, count: 0}));
         this.upgrades = UPGRADES.map(u => ({...u, bought: false})).sort((a, b) => a.cost - b.cost);
 
         this.loadGame();
 
+        // Left column: score, click button and reset button
         this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(SCORE_FRAME_SCALE);
         this.scoreRubis = fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
         this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 4, `0`, textStyle(40, '#ffd66b')).setOrigin(0.5);
@@ -67,7 +74,7 @@ export default class GameScene extends Phaser.Scene{
             this.scene.restart()
         })
 
-        // The building cards scroll under the upgrades. The window is 20px wider on each side, so a hovered card isn't cut.
+        // Right column, the shop. The building cards scroll under the upgrades. The window is 20px wider on each side, so a hovered card isn't cut.
         // It must be made before the upgrade tiles, so the tiles stay on top of the zones that block the hidden cards.
         this.shopPanel = new ScrollPanel(this, SHOP_X - 20, BUILDINGS_Y, SHOP_WIDTH + 40, SHOP_LIST_HEIGHT, CARD_HEIGHT + CARD_GAP, {blockOutside: true});
         this.shopList = this.shopPanel.content;
@@ -88,6 +95,7 @@ export default class GameScene extends Phaser.Scene{
             this.makeVillageRow(building, index)
         })
 
+        // Tooltip, hidden until a card or a tile is hovered
         this.tooltipFrame = this.add.image(SHOP_X - 12, 0, 'building-contour').setOrigin(1, 0).setDepth(10).setVisible(false);
         this.tooltipIcon = this.add.image(TOOLTIP_LEFT + 104, 0, 'rubis').setDepth(10).setVisible(false);
         this.tooltip = this.add.text(TOOLTIP_LEFT + 176, 0, '', {...textStyle(26), wordWrap: {width: 388}}).setDepth(10).setVisible(false);
@@ -107,6 +115,7 @@ export default class GameScene extends Phaser.Scene{
         // When a list scrolls, cards move under a pointer that doesn't: check what is under it every frame, not only when it moves
         this.input.setPollAlways();
 
+        // Timers: autosave, and the rubies that sparkle (the score one, and the shop ones the player can afford)
         this.time.addEvent({
             delay: 5000,
             loop: true,
@@ -116,7 +125,7 @@ export default class GameScene extends Phaser.Scene{
         this.time.addEvent({
             delay: 1700,
             loop: true,
-            callback: () => {this.sparkle(this.scoreRubis)}
+            callback: () => this.sparkle(this.scoreRubis)
         })
 
         this.time.addEvent({
@@ -124,35 +133,71 @@ export default class GameScene extends Phaser.Scene{
             loop: true,
             callback: () => this.sparkleShop()
         })
-
-        
     }
 
-    sparkle(rubis){
-        const x = rubis.x + Phaser.Math.FloatBetween(-0.2, 0.2) * rubis.displayWidth;
-        const y = rubis.y + Phaser.Math.FloatBetween(-0.3, 0.3) * rubis.displayHeight;
+    update(time, delta){
+        const elapsedTime = delta / 1000;
+        this.addScore(this.getTotalProduction() * elapsedTime)
+        this.refreshUi();
+    }
 
-        const sparkle = this.add.image(x, y, 'sparkle').setScale(0)
-        const size = rubis.displayHeight * 0.5 / 64
+    refreshUi(){
+        this.updateScoreText()
+        this.updateShopState()
+        this.updateTooltip()
+    }
 
-        this.tweens.add({targets: sparkle, duration: 500, onComplete: () => sparkle.destroy(), scale:{value: size, duration: 250, yoyo: true}, angle: 18, ease:'Sine.inOut'})
+    // ==================== RULES ====================
+    // The score, prices, click power and production. Nothing here touches the screen.
 
-        if (rubis.parentContainer) {
-            rubis.parentContainer.add(sparkle);
+    addScore(amount){
+        this.score += amount
+    }
+
+    getCost(building){
+        return Math.floor(building.cost * 1.15**building.count)
+    }
+
+    getClickPower(){
+        let power = 1;
+        for (const u of this.upgrades){
+            if (u.bought && u.type === "click") power *= u.multiplier;
         }
+        return power;
     }
 
-    sparkleShop(){
-        const building = Phaser.Utils.Array.GetRandom(this.buildings)
-
-        if(this.score >= this.getCost(building)){
-            this.sparkle(building.rubis)
+    getBuildingProduction(building){
+        let production = building.production;
+        for (const u of this.upgrades){
+            if (u.bought && u.type === "building" && u.target === building.id) production *= u.multiplier;
+            if (u.bought && u.type === "global") production *= u.multiplier;
         }
-       
+        return production;
     }
+
+    getTotalProduction(){
+        let totalProduction = 0;
+        for (const building of this.buildings) {
+            totalProduction += building.count * this.getBuildingProduction(building)
+        }
+        return totalProduction
+    }
+
+    findBuildingById(buildingId) {
+        return this.buildings.find(b => b.id === buildingId);
+    }
+
+    isUpgradeAvailable(upgrade){
+        if (upgrade.bought) return false;
+        if (upgrade.type !== "building") return true;
+        return this.findBuildingById(upgrade.target).count >= (upgrade.unlockAt ?? 1);
+    }
+
+    // ==================== SCORE AND CLICK BUTTON ====================
+    // Left column: the button the player clicks, its effects, and the score above it.
+
     makeClickButton(){
         const hitArea = new Phaser.Geom.Circle(470, 430, 380);
-
         this.clickButton = this.add.image(PLAY_AREA_X, 560, 'click-image').setScale(CLICK_BUTTON_SCALE)
             .setInteractive({hitArea, hitAreaCallback: Phaser.Geom.Circle.Contains, useHandCursor: true})
             .on('pointerdown', (pointer) => {
@@ -183,47 +228,15 @@ export default class GameScene extends Phaser.Scene{
             ease: 'Cubic.out',
             onComplete: () => gainText.destroy()
         });
-
-       
     }
 
-    makeBuildingRow(building, index){
-        const column = index % 2;
-        const line = Math.floor(index / 2);
-        const x = SHOP_X + CARD_WIDTH / 2;
-        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + index * (CARD_HEIGHT + CARD_GAP);
-        const left = -CARD_WIDTH / 2;
-
-        const frame = this.add.image(0, 0, 'building-contour').setDisplaySize(CARD_WIDTH, CARD_HEIGHT);
-        const image = fitInside(this.add.image(left + 76 , -2, building.icon), 122);
-        const name = this.add.text(left + 146, -40, capitalize(building.name), textStyle(32))
-        const rubis = fitInside(this.add.image(left + 158, 20, 'rubis'), 30)
-        building.costText = this.add.text(left + 176, 20, '', textStyle(26, '#ffd66b')).setOrigin(0, 0.5);
-        building.countText = this.add.text(-left - 34, 0, '', textStyle(46)).setOrigin(1, 0.5);
-
-        const hitArea = this.add.zone(0, 0, CARD_WIDTH, CARD_HEIGHT);
-
-        building.row = this.add.container(x, y, [frame, image, name, rubis, building.costText, building.countText, hitArea]);
-        this.shopList.add(building.row);
-
-        this.addHover(hitArea, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
-            this.buyBuilding(building)
-        })
-
-        building.rubis = rubis;
+    updateScoreText(){
+        this.scoreText.setText(`${formatNumber(this.score)}`)
+        this.totalProductionText.setText(`${compactNumber.format(this.getTotalProduction())} points/s`)
     }
 
-    makeUpgradeTile(upgrade){
-        const frame = this.add.image(0, 0, 'upgrade-contour').setOrigin(0.5, 0.46).setScale(0.468);
-        const icon = fitInside(this.add.image(0, 0, upgrade.icon), UPGRADE_SIZE * 0.72);
-        const hitArea = this.add.zone(0, 0, UPGRADE_SIZE, UPGRADE_SIZE);
-
-        upgrade.tile = this.add.container(SHOP_X, UPGRADES_Y + UPGRADE_SIZE / 2, [frame, icon, hitArea]).setVisible(false);
-
-        this.addHover(hitArea, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
-            this.buyUpgrade(upgrade)
-        })
-    }
+    // ==================== VILLAGE ====================
+    // Middle column: one row per type of building the player owns, with a copy of the building for each one bought.
 
     makeVillageRow(building, index){
         const y = VILLAGE_Y + index * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP);
@@ -268,6 +281,101 @@ export default class GameScene extends Phaser.Scene{
         const lastOwned = this.buildings.findLastIndex(building => building.count > 0);
         return (lastOwned + 1) * (VILLAGE_ROW_HEIGHT + VILLAGE_ROW_GAP) - VILLAGE_ROW_GAP;
     }
+
+    // ==================== SHOP ====================
+    // Right column: the building cards and the upgrade tiles, buying them, and dimming what the player can't afford.
+
+    makeBuildingRow(building, index){
+        const x = SHOP_X + CARD_WIDTH / 2;
+        const y = BUILDINGS_Y + CARD_HEIGHT / 2 + index * (CARD_HEIGHT + CARD_GAP);
+        const left = -CARD_WIDTH / 2;
+
+        const frame = this.add.image(0, 0, 'building-contour').setDisplaySize(CARD_WIDTH, CARD_HEIGHT);
+        const image = fitInside(this.add.image(left + 76 , -2, building.icon), 122);
+        const name = this.add.text(left + 146, -40, capitalize(building.name), textStyle(32))
+        const rubis = fitInside(this.add.image(left + 158, 20, 'rubis'), 30)
+        building.costText = this.add.text(left + 176, 20, '', textStyle(26, '#ffd66b')).setOrigin(0, 0.5);
+        building.countText = this.add.text(-left - 34, 0, '', textStyle(46)).setOrigin(1, 0.5);
+
+        const hitArea = this.add.zone(0, 0, CARD_WIDTH, CARD_HEIGHT);
+
+        building.row = this.add.container(x, y, [frame, image, name, rubis, building.costText, building.countText, hitArea]);
+        this.shopList.add(building.row);
+
+        this.addHover(hitArea, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
+            this.buyBuilding(building)
+        })
+
+        building.rubis = rubis;
+    }
+
+    buyBuilding(building){
+        const cost = this.getCost(building)
+
+        if (this.score >= cost) {
+            this.addScore(-cost);
+            building.count++;
+            this.updateVillageRow(building, true);
+            this.particles.explode(8, building.row.x, building.row.y + this.shopList.y);
+            this.sound.play('buy-building-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
+            this.layoutUpgrades()
+        }
+    }
+
+    makeUpgradeTile(upgrade){
+        const frame = this.add.image(0, 0, 'upgrade-contour').setOrigin(0.5, 0.46).setScale(0.468);
+        const icon = fitInside(this.add.image(0, 0, upgrade.icon), UPGRADE_SIZE * 0.72);
+        const hitArea = this.add.zone(0, 0, UPGRADE_SIZE, UPGRADE_SIZE);
+
+        upgrade.tile = this.add.container(SHOP_X, UPGRADES_Y + UPGRADE_SIZE / 2, [frame, icon, hitArea]).setVisible(false);
+
+        this.addHover(hitArea, () => this.getUpgradeInfo(upgrade), upgrade.icon).on('pointerdown', () => {
+            this.buyUpgrade(upgrade)
+        })
+    }
+
+    buyUpgrade(upgrade){
+        if (upgrade.bought) return;
+        if (this.score < upgrade.cost) return;
+        this.addScore(-upgrade.cost);
+        upgrade.bought = true;
+        this.particles.explode(8, upgrade.tile.x, upgrade.tile.y);
+        this.sound.play('buy-upgrade-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
+        this.hideTooltip()
+        this.layoutUpgrades()
+    }
+
+    layoutUpgrades(){
+        const shown = this.upgrades.filter(u => this.isUpgradeAvailable(u)).slice(0, MAX_VISIBLE_UPGRADES);
+        let x = SHOP_X + UPGRADE_SIZE / 2;
+        for (const upgrade of this.upgrades){
+            if (!shown.includes(upgrade)){
+                upgrade.tile.setVisible(false);
+            } else {
+                if (upgrade.tile.visible){
+                    this.tweens.add({targets: upgrade.tile, x: x, duration: 200});
+                } else {
+                    upgrade.tile.setX(x).setVisible(true);
+                }
+                x += UPGRADE_SIZE + UPGRADE_GAP;
+            }
+        }
+    }
+
+    updateShopState(){
+        for(const building of this.buildings){
+            const cost = this.getCost(building);
+            building.row.setAlpha(this.score >= cost ? 1 : 0.6)
+            building.costText.setText(formatNumber(cost))
+            building.countText.setText(`${building.count}`)
+        }
+        for(const upgrade of this.upgrades){
+            upgrade.tile.setAlpha(this.score >= upgrade.cost ? 1 : 0.6)
+        }
+    }
+
+    // ==================== TOOLTIP ====================
+    // Hovering a shop card or an upgrade tile makes it grow, and shows its details next to the shop.
 
     addHover(target, getInfo, icon){
         // target is inside a card or a tile: parentContainer is that card, which grows a little on hover
@@ -331,118 +439,43 @@ export default class GameScene extends Phaser.Scene{
         ].join('\n');
     }
 
-    addScore(amount){
-        this.score += amount
-    }
+    // ==================== PASSIVE ANIMATIONS ====================
+    // Small effects that play on their own, started by the timers in create(). The portal glow and the fireflies are made in create().
 
-    getCost(building){
-        return Math.floor(building.cost * 1.15**building.count)
-    }
+    // A star pops up on a random spot of the ruby, turns a little and disappears
+    sparkle(rubis){
+        const x = rubis.x + Phaser.Math.FloatBetween(-0.2, 0.2) * rubis.displayWidth;
+        const y = rubis.y + Phaser.Math.FloatBetween(-0.3, 0.3) * rubis.displayHeight;
 
-    buyBuilding(building){
-        const cost = this.getCost(building)
+        const sparkle = this.add.image(x, y, 'sparkle').setScale(0)
+        const size = rubis.displayHeight * 0.5 / 64
 
-        if (this.score >= cost) {
-            this.addScore(-cost);
-            building.count++;
-            this.updateVillageRow(building, true);
-            this.particles.explode(8, building.row.x, building.row.y + this.shopList.y);
-            this.sound.play('buy-building-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
-            this.layoutUpgrades()
+        this.tweens.add({
+            targets: sparkle,
+            scale: {value: size, duration: 250, yoyo: true},
+            angle: 18,
+            duration: 500,
+            ease: 'Sine.inOut',
+            onComplete: () => sparkle.destroy()
+        })
+
+        // A ruby on a shop card is placed inside that card: the star goes in the card too, to scroll and grow with it
+        if (rubis.parentContainer) {
+            rubis.parentContainer.add(sparkle);
         }
     }
 
-    buyUpgrade(upgrade){
-        if (upgrade.bought) return;
-        if (this.score < upgrade.cost) return;
-        this.addScore(-upgrade.cost);
-        upgrade.bought = true;
-        this.particles.explode(8, upgrade.tile.x, upgrade.tile.y);
-        this.sound.play('buy-upgrade-sound', {volume: 0.2, detune: Phaser.Math.Between(-150, 150)});
-        this.hideTooltip()
-        this.layoutUpgrades()
-    }
+    // Picks a building at random, and only sparkles its ruby if the player can afford it
+    sparkleShop(){
+        const building = Phaser.Utils.Array.GetRandom(this.buildings)
 
-    getClickPower(){
-        let power = 1;
-        for (const u of this.upgrades){
-            if (u.bought && u.type === "click") power *= u.multiplier;
-        }
-        return power;
-    }
-
-    getBuildingProduction(building){
-        let production = building.production;
-        for (const u of this.upgrades){
-            if (u.bought && u.type === "building" && u.target === building.id) production *= u.multiplier;
-            if (u.bought && u.type === "global") production *= u.multiplier;
-        }
-        return production;
-    }
-
-    updateScoreText(){
-        this.scoreText.setText(`${formatNumber(this.score)}`)
-        this.totalProductionText.setText(`${compactNumber.format(this.getTotalProduction())} points/s`)
-    }
-
-    updateShopState(){
-        for(const building of this.buildings){
-            const cost = this.getCost(building);
-            building.row.setAlpha(this.score >= cost ? 1 : 0.6)
-            building.costText.setText(formatNumber(cost))
-            building.countText.setText(`${building.count}`)
-        }
-        for(const upgrade of this.upgrades){
-            upgrade.tile.setAlpha(this.score >= upgrade.cost ? 1 : 0.6)
+        if(this.score >= this.getCost(building)){
+            this.sparkle(building.rubis)
         }
     }
 
-    isUpgradeAvailable(upgrade){
-        if (upgrade.bought) return false;
-        if (upgrade.type !== "building") return true;
-        return this.findBuildingById(upgrade.target).count >= (upgrade.unlockAt ?? 1);
-    }
-
-    layoutUpgrades(){
-        const shown = this.upgrades.filter(u => this.isUpgradeAvailable(u)).slice(0, MAX_VISIBLE_UPGRADES);
-        let x = SHOP_X + UPGRADE_SIZE / 2;
-        for (const upgrade of this.upgrades){
-            if (!shown.includes(upgrade)){
-                upgrade.tile.setVisible(false);
-            } else {
-                if (upgrade.tile.visible){
-                    this.tweens.add({targets: upgrade.tile, x: x, duration: 200});
-                } else {
-                    upgrade.tile.setX(x).setVisible(true);
-                }
-                x += UPGRADE_SIZE + UPGRADE_GAP;
-            }
-        }
-    }
-
-    findBuildingById(buildingId) {
-        return this.buildings.find(b => b.id === buildingId);
-    }
-
-    refreshUi(){
-        this.updateScoreText()
-        this.updateShopState()
-        this.updateTooltip()
-    }
-
-    getTotalProduction(){
-        let totalProduction = 0;
-        for (const building of this.buildings) {
-            totalProduction += building.count * this.getBuildingProduction(building)
-        }
-        return totalProduction
-    }
-
-    update(time, delta){
-        const elapsedTime = delta / 1000;
-        this.addScore(this.getTotalProduction() * elapsedTime)
-        this.refreshUi();
-    }
+    // ==================== SAVE ====================
+    // The game saves itself every 5 seconds (see the timer in create()), and loads the save when the scene starts.
 
     saveGame(){
         writeSave({
