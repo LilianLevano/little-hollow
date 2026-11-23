@@ -36,6 +36,7 @@ export default class GameScene extends Phaser.Scene{
 
         this.add.image(PLAY_AREA_X, SCORE_FRAME_Y, 'score-contour').setScale(SCORE_FRAME_SCALE);
         this.scoreRubis = fitInside(this.add.image(PLAY_AREA_X - 134, SCORE_FRAME_Y + 4, 'rubis'), 50);
+        this.rubis = [this.scoreRubis]
         this.scoreText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 4, `0`, textStyle(40, '#ffd66b')).setOrigin(0.5);
         this.totalProductionText = this.add.text(PLAY_AREA_X, SCORE_FRAME_Y + 96, `0 points/s`, textStyle(28)).setOrigin(0.5);
         this.makeClickButton();
@@ -92,9 +93,9 @@ export default class GameScene extends Phaser.Scene{
         });
 
         this.time.addEvent({
-            delay: 1500,
+            delay: 300,
             loop: true,
-            callback: () => this.sparkle(this.scoreRubis)
+            callback: () => this.sparkle(Phaser.Utils.Array.GetRandom(this.rubis))
         })
 
         
@@ -107,7 +108,11 @@ export default class GameScene extends Phaser.Scene{
         const sparkle = this.add.image(x, y, 'sparkle').setScale(0)
         const size = rubis.displayHeight * 0.5 / 64
 
-        this.tweens.add({targets: sparkle, duration: 5000, onComplete: () => sparkle.destroy(), scale:{value: size, duration: 250, yoyo: true}, angle: 180, ease:'Sine.inOut'})
+        this.tweens.add({targets: sparkle, duration: 500, onComplete: () => sparkle.destroy(), scale:{value: size, duration: 250, yoyo: true}, angle: 18, ease:'Sine.inOut'})
+
+        if (rubis.parentContainer) {
+            rubis.parentContainer.add(sparkle);
+        }
 
 
     }
@@ -144,6 +149,8 @@ export default class GameScene extends Phaser.Scene{
             ease: 'Cubic.out',
             onComplete: () => gainText.destroy()
         });
+
+       
     }
 
     makeBuildingRow(building, index){
@@ -168,6 +175,8 @@ export default class GameScene extends Phaser.Scene{
         this.addHover(hitArea, () => this.getBuildingInfo(building), building.icon).on('pointerdown', () => {
             this.buyBuilding(building)
         })
+
+         this.rubis.push(rubis)
     }
 
     makeUpgradeTile(upgrade){
